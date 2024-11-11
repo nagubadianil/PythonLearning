@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		
+		"workbench.colorCustomizations": {
+			"editor.background": "#301e27",
+			"editor.foreground": "#be1515",
+			"activityBar.background": "#3b0846",
+			"sideBar.background": "#252b4d"
+		  },
+		  "editor.fontSize": 14
+	}
+}
