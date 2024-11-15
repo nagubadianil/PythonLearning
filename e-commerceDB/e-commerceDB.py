@@ -7,7 +7,7 @@ from sqlalchemy.sql import and_, or_
 from datetime import datetime
 
 # Define the database and base class
-engine = create_engine("sqlite:///:memory:")
+engine = create_engine("sqlite:///commerce.db")
 Base = declarative_base()
 
 # Models
