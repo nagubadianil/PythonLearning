@@ -146,7 +146,7 @@ class BreakoutGame:
         
 
 if __name__ == "__main__":
-    game = BreakoutGame("My favorite game")
+    game = BreakoutGame("Simple Game")
     game.populate_objects()
     game.run_game()
     pygame.quit()

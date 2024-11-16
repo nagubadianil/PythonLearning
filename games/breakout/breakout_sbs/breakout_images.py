@@ -1,13 +1,24 @@
 from breakout_classes import BreakoutGame, Paddle, Ball, Brick, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE
 import pygame
 import sys
+import os
 
 BLACK = (0, 0, 0)
+
+def resource_path(relative_path):
+    """Get the absolute path to a resource, works for both dev and PyInstaller."""
+    try:
+        # For PyInstaller, the resource is extracted to sys._MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        # For normal development, use the current directory
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 class ScenicPaddle(Paddle):
     def __init__(self, img="stick.png"):
         super().__init__()
-        self.stick_image = pygame.image.load(img)
+        self.stick_image = pygame.image.load(resource_path(img))
         self.stick_image = pygame.transform.scale(self.stick_image, (self.width, self.height))
         self.height = 20
     def draw(self,screen):
@@ -17,7 +28,7 @@ class ScenicBall(Ball):
     def __init__(self, img="ball.png"):
         super().__init__()
         self.size = 20
-        self.ball_image = pygame.image.load(img)
+        self.ball_image = pygame.image.load(resource_path(img))
         self.ball_image = pygame.transform.scale(self.ball_image, (self.size, self.size))
 
     def draw(self,screen):
@@ -26,7 +37,7 @@ class ScenicBall(Ball):
 class ScenicBrick(Brick):
     def __init__(self, x, y, img="brick.png"):
         super().__init__(x, y)
-        self.brick_image = pygame.image.load(img)
+        self.brick_image = pygame.image.load(resource_path(img))
         self.brick_image = pygame.transform.scale(self.brick_image, (self.width, self.height))
 
     def draw(self,screen):
@@ -36,7 +47,7 @@ class ScenicBrick(Brick):
 class ScenicBreakoutGame(BreakoutGame):  
     def __init__(self, game_name, bg_img="nature_bg.png"):
         super().__init__(game_name)
-        self.background_image = pygame.image.load(bg_img)
+        self.background_image = pygame.image.load(resource_path(bg_img))
         self.background_image = pygame.transform.scale(self.background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))  # Scale image to fit screen
 
     def populate_objects(self):
@@ -66,7 +77,7 @@ class ScenicBreakoutGame(BreakoutGame):
 
  
 def run_main_loop():        
-    game = ScenicBreakoutGame("My Scenic Game")
+    game = ScenicBreakoutGame("Bhavesh, yet to build GAME")
     game.populate_objects()
     game.run_game()
     if not game.bricks:
@@ -87,6 +98,8 @@ def run_main_loop():
                     pygame.quit()
                     sys.exit()
 
-if __name__ == "__main__":                  
-   run_main_loop()
- 
+if __name__ == "__main__":    
+    try:               
+        run_main_loop()
+    except:
+        pass
