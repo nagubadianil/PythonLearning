@@ -98,6 +98,9 @@ class BreakoutGame:
         self.bricks = [Brick(col * 80 + 10, row * 40 + 10) for row in range(5) for col in range(10)]
         self.game_score = {"name":"unknown", "score": 0 }     
 
+    def draw_screen(self):
+         self.screen.fill(WHITE)  # Set background color
+
     def run_game(self):    
         # Main loop
         running = True
@@ -126,8 +129,10 @@ class BreakoutGame:
                 print("You Win!")
                 running = False
 
-            self.screen.fill(WHITE)  # Set background color
+            self.draw_screen()
+           
             self.paddle.draw(self.screen)  # Draw paddle
+           
             self.ball.draw(self.screen)  # Draw ball
             
             for brick in self.bricks:
@@ -137,10 +142,11 @@ class BreakoutGame:
             self.clock.tick(60)
 
         print(f"Final Score: {self.game_score["score"]}")
-        pygame.quit()
+        
         
 
 if __name__ == "__main__":
     game = BreakoutGame("My favorite game")
     game.populate_objects()
     game.run_game()
+    pygame.quit()
