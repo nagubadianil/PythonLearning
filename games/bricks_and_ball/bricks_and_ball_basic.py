@@ -43,9 +43,9 @@ class Ball:
         self.x += self.dx
         self.y += self.dy
         if self.x <= 0 or self.x >= SCREEN_WIDTH - self.size:
-            self.bounce("x")
+            self.handle_bounce_x()
         if self.y <= 0:
-            self.bounce("y")
+            self.handle_bounce_y()
         
     def bounce(self, axis):
         if axis == "x":
@@ -59,15 +59,26 @@ class Ball:
             paddle.x < self.x < paddle.x + paddle.width
             and paddle.y < self.y + self.size < paddle.y + paddle.height
         ):
-            self.bounce("y")
+           self.handle_collision()
             
     def break_bricks(self, bricks, score_card):
         for brick in bricks[:]:
             if (brick.x < self.x < brick.x + brick.width) and (brick.y < self.y < brick.y + brick.height):
-                bricks.remove(brick)
-                self.bounce("y")
-                score_card["score"] += 10
-
+               self.handle_break_bricks(bricks, brick, score_card)
+               
+    def handle_break_bricks(self, bricks, brick, score_card):
+         bricks.remove(brick)
+         self.bounce("y")
+         score_card["score"] += 10
+     
+    def handle_collision(self):
+        self.bounce("y")   
+    
+    def handle_bounce_x(self):
+         self.bounce("x")
+    
+    def handle_bounce_y(self):
+        self.bounce("y")
             
 # Brick class
 class Brick:
@@ -92,11 +103,27 @@ class BreakoutGame:
         self.screen =  pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT)) 
         self.clock = pygame.time.Clock()
         
-    def populate_objects(self):
-        self.paddle = Paddle()
-        self.ball = Ball()
-        self.bricks = [Brick(col * 80 + 10, row * 40 + 10) for row in range(5) for col in range(10)]
-        self.game_score = {"name":"unknown", "score": 0 }     
+    def populate_objects(self, paddle=None, ball=None, bricks=None, game_score=None):
+        
+        if paddle is not None:
+            self.paddle = paddle
+        else:
+            self.paddle = Paddle()
+        
+        if ball is not None:
+            self.ball = ball
+        else:
+            self.ball = Ball()
+        
+        if bricks is not None:
+            self.bricks = bricks
+        else:
+            self.bricks = [Brick(col * 80 + 10, row * 40 + 10) for row in range(5) for col in range(10)]
+        
+        if game_score is not None:
+            self.game_score = game_score
+        else:
+            self.game_score = {"name":"unknown", "score": 0 }     
 
     def draw_screen(self):
          self.screen.fill(WHITE)  # Set background color
