@@ -27,7 +27,7 @@ class MusicBall(ScenicBall):
         super().handle_bounce_x() 
     
     def handle_bounce_y(self):
-        super().handle_bounce_y
+        super().handle_bounce_y()
 
 class MusicBreakoutGame(ScenicBreakoutGame):
     def __init__(self, game_name,bg_music="background_music.mp3"):
