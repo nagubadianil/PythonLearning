@@ -170,10 +170,15 @@ class BreakoutGame:
 
         print(f"Final Score: {self.game_score["score"]}")
         
-        
 
-if __name__ == "__main__":
+def run_main_loop():
     game = BreakoutGame("Simple Game")
     game.populate_objects()
     game.run_game()
     pygame.quit()
+
+if __name__ == "__main__":
+    try:               
+        run_main_loop()
+    except:
+        pass
