@@ -226,7 +226,7 @@ def rename_vocals(vocals_path,mp3_path):
         
         return new_path 
 def process_separated_files():
-    root_folder = "G:/My Drive/Music/Telugu"
+    root_folder = "C:/Users/nagub/Music/Telugu"
     for vocals_path, mp3_path in file_iterator(root_folder):
         print(f"!!vocals: {vocals_path}")
         print(f"!!mp3_path {mp3_path}")
@@ -250,10 +250,3 @@ if __name__=="__main__":
     
     #transcribe_and_add_meta_data()
     process_separated_files()
-    """
-    Play
-    document.querySelector("#cell-hhqHhC3_U3Do > div.main-content > div > div.codecell-input-output > div.inputarea.horizontal.layout.code > div.cell-gutter > div > colab-run-button")
-    
-    Code cell
-    document.querySelector("#cell-hhqHhC3_U3Do > div.main-content > div > div.codecell-input-output > div.inputarea.horizontal.layout.code > div.editor.flex.lazy-editor > div")
-    """
