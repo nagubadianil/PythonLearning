@@ -9,10 +9,11 @@ model = genai.GenerativeModel("gemini-1.5-flash")
 
 def generate_transcription(prompt, mp3_file_path=None):
   
+ 
     sample_audio = None
     if mp3_file_path is not None:
         sample_audio = genai.upload_file(mp3_file_path)
-    
+
         while sample_audio.state.name == "PROCESSING":
                 print("uploaded, now processing video...")
                 time.sleep(2)
@@ -20,6 +21,7 @@ def generate_transcription(prompt, mp3_file_path=None):
                 
     response = model.generate_content([prompt,sample_audio])
     return response
+
 
 def get_media_information(mp3_file_path):
     prompt = """
@@ -29,15 +31,23 @@ def get_media_information(mp3_file_path):
     Then do the below:
     Given the transcription, do an internet search and find out Title, Album, Artist, Genre, Language, Year 
     Make sure to put them in one line each in response. Don't put any other text like preamble or anything
-    
+    Also, if you cannot determine the values for them, just put "Not Found". Don't put other text.
     """
-    response = generate_transcription(prompt, mp3_file_path)
-   
-    print("#"*60)
-    print(response.text)  # Output the transcription
-    print("+"*60)
-    print(response.usage_metadata)
-    return response.text
+    try:
+        response = generate_transcription(prompt, mp3_file_path)
+        
+        #print(response)
+        print("#"*60)
+        print(response.text)  # Output the transcription
+        print("+"*60)
+        print(response.usage_metadata)
+        return response.text
+    except Exception as e:
+      print("$"*90)
+      print("Exception e:", str(e))
+      print("$"*90) 
+      return "Exception:"+str(e)  
+ 
 
 def rename_and_add_metadata(lyrics_text, meta_data, mp3_file_path):
    
@@ -59,6 +69,7 @@ def rename_and_add_metadata(lyrics_text, meta_data, mp3_file_path):
     # If Title is not found, use the first 10 words from lyrics
     if title == "Not Found":
         title = ' '.join(lyrics_text.split()[:10])
+        title = title[:45]
         title = title.title()
         
     audiofile.tag.title = title  # Title case for Title
@@ -103,11 +114,19 @@ def parse_metadata(text):
 
     metadata = {}
     lines = text.strip().split("\n")
+    bad_strings = [
+        "Not Found",
+        "not be found",
+        "Unable to determine",
+        "Unknown",
+        "Not found",
+    ]
     for line in lines:
         # Split key and value by the first occurrence of ":"
         if ':' in line:
             key, value = line.split(":", 1)
-            if "Not Found" in value:
+            #if "Not Found" in value or "not be found" in value or "Unable to determine" in value or "not be found" in value:
+            if any(item in value for item in bad_strings):
                 value = "Not Found"
             metadata[key.strip()] = value.strip()
     return metadata
@@ -119,7 +138,8 @@ def add_meta_data_to_mp3(response_text, mp3_file_path = "vocals.mp3"):
     lyrics_text = resp_array[0].strip()
     meta_data = parse_metadata(resp_array[1].strip())
     new_file_path = rename_and_add_metadata(lyrics_text=lyrics_text, meta_data=meta_data, mp3_file_path=mp3_file_path)
-    print(f"New file created at: {new_file_path}") 
+    print(f"New file created at: {new_file_path}")
+    return new_file_path 
     
 def test_extract():
     response_text = """
@@ -168,9 +188,59 @@ Year: Not Found
 
 def transcribe_and_add_meta_data(vocals_file_path = "vocals.mp3", destination_file_path = "vocals.mp3"):
      
-     response_text = get_media_information(vocals_file_path)
-     add_meta_data_to_mp3(response_text, destination_file_path)
+    response_text = get_media_information(vocals_file_path)
+    if "Exception" not in response_text:
+        return add_meta_data_to_mp3(response_text, destination_file_path)
+    else:
+        return response_text
 
+def file_iterator(root_folder):
+
+    for dirpath, _, filenames in os.walk(root_folder):
+        for filename in filenames:
+            # Yielding all files named 'vocals.mp3'
+            if filename.lower() == 'vocals.mp3':
+                vocals_path = os.path.join(dirpath, filename)
+               
+                parent_folder = os.path.dirname(vocals_path)  # Get the parent folder of 'vocals.mp3'
+                parent_name = os.path.basename(parent_folder)
+                great_grandparent_folder =  os.path.dirname(os.path.dirname(parent_folder))  # Get the grandparent folder
+                
+                mp3_path = os.path.join(great_grandparent_folder, parent_name+".mp3")
+                yield vocals_path,mp3_path 
+
+def rename_vocals(vocals_path,mp3_path):
+        new_dir_name = os.path.basename(mp3_path).split(".mp3")[0]
+        parent_folder = os.path.dirname(vocals_path) 
+        parent_dir = os.path.dirname(parent_folder)
+       
+        new_path = os.path.join(parent_dir, new_dir_name)
+        
+        new_vocals_path = os.path.join(parent_folder, "__vocal__"+ new_dir_name + ".mp3")
+        old_accompaniment_path = os.path.join(parent_folder, "accompaniment" + ".mp3")
+        new_accompaniment_path = os.path.join(parent_folder, "__accompaniment__" + new_dir_name +".mp3")
+        
+        os.rename(vocals_path, new_vocals_path)
+        os.rename(old_accompaniment_path, new_accompaniment_path)
+        os.rename(parent_folder, new_path)
+        
+        return new_path 
+def process_separated_files():
+    root_folder = "G:/My Drive/Music/Telugu"
+    for vocals_path, mp3_path in file_iterator(root_folder):
+        print(f"!!vocals: {vocals_path}")
+        print(f"!!mp3_path {mp3_path}")
+       
+        
+        new_mp3_path = transcribe_and_add_meta_data(vocals_file_path = vocals_path, destination_file_path = mp3_path)
+        
+        if "Exception" not in new_mp3_path:
+            print(f"!!new_mp3_path:", new_mp3_path)
+            
+            new_vocals_root_path = rename_vocals(vocals_path, new_mp3_path)
+            
+            print(f"!!new_vocals_root_path:", new_vocals_root_path)
+            print("+"*60)
 
 if __name__=="__main__":   
     #transcribe_audio()
@@ -178,8 +248,8 @@ if __name__=="__main__":
     #get_media_information()
     #test_extract()
     
-    transcribe_and_add_meta_data()
-    
+    #transcribe_and_add_meta_data()
+    process_separated_files()
     """
     Play
     document.querySelector("#cell-hhqHhC3_U3Do > div.main-content > div > div.codecell-input-output > div.inputarea.horizontal.layout.code > div.cell-gutter > div > colab-run-button")
