@@ -10,6 +10,26 @@ Must install ffmpeg on system:
  binaries location: https://www.gyan.dev/ffmpeg/builds/
 
 """
+def delete_file(file_path):
+    """
+    Deletes a file given its full path.
+
+    Parameters:
+    - file_path: The full path of the file to delete.
+
+    Returns:
+    - None
+    """
+    try:
+        # Check if the file exists
+        if os.path.exists(file_path):
+            os.remove(file_path)  # Remove the file
+            print(f"File deleted: {file_path}")
+        else:
+            print(f"File not found: {file_path}")
+    except Exception as e:
+        print(f"An error occurred while deleting the file: {e}")
+
 # Function to split MP3 file based on pauses
 def split_mp3(file_path, output_folder, min_silence_len=1000, silence_thresh=-40):
     """
@@ -38,7 +58,10 @@ def split_mp3(file_path, output_folder, min_silence_len=1000, silence_thresh=-40
             chunk.export(output_file, format="mp3")
             print(f"Saved: {output_file}")
         
-        print("Splitting complete!")
+        delete_file(file_path)
+        
+        print(f"Splitting complete, deleted original file {file_path}!")
+        
     except Exception as e:
         print(f"An error occurred: {e}")
 
@@ -107,14 +130,8 @@ def create_folder_for_file(file_path):
         return None
 
 
-def split_all_files_in_folder():
-    # Example usage
-    root_folder = "c:/Users/nagub/Music/Telugu/DSP"  # Replace with your folder path
-    
-    if len(sys.argv)>1 and sys.argv[1] is not None:
-        root_folder = sys.argv[1]
-    
-    
+def split_all_files_in_folder(root_folder):
+   
     long_mp3_files = find_long_mp3_files(root_folder)
 
     print("\nFiles longer than 9 minutes:")
@@ -126,11 +143,22 @@ def split_all_files_in_folder():
         if folder_path is not None:
             split_mp3(file_path, folder_path)    
 
-def test1():
-    file_path="c:/Users/nagub/Music/Telugu/DSP\Allu Arjun & Devi Sri Prasad Hit Songs  So Satyamurthy Movie Special.mp3"
-    folder_path="c:/Users/nagub/Music/Telugu/DSP\Allu Arjun & Devi Sri Prasad Hit Songs  So Satyamurthy Movie Special"
+def split_single_file():
+    file_path="c:/Users/nagub/Music/Telugu/DSP/Allu Arjun & Devi Sri Prasad Hit Songs  So Satyamurthy Movie Special.mp3"
+    folder_path="c:/Users/nagub/Music/Telugu/DSP/Allu Arjun & Devi Sri Prasad Hit Songs  So Satyamurthy Movie Special"
+    
     split_mp3(file_path, folder_path)    
 
+def split_many_files():
+     # Example usage
+    root_folder = "C:/Users/nagub/Music/Telugu/Keeravani"  # Replace with your folder path
+   
+    split_all_files_in_folder(root_folder)
+    
+
 if __name__=="__main__":
-    #test1()
-    split_all_files_in_folder()
+    #split_single_file()
+    # if len(sys.argv)>1 and sys.argv[1] is not None:
+    #     root_folder = sys.argv[1]
+    
+    split_many_files()
