@@ -6,7 +6,38 @@ let run_button_index = 0;
 let code_boxes = null
 let which_box = 0
 
+let scrollDirection = "down"; // Keep track of the current direction
+let scrollInterval;
+let scrollEnabled = false;
 
+
+// Event listeners for enabling/disabling the clicker
+chrome.runtime.onMessage.addListener((message) => {
+    if (message.action === "startClicking") {
+      console.log("startClicking");
+      startClicking();
+    } else if (message.action === "stopClicking") {
+      console.log("stopClicking");
+      stopClicking();
+    }
+  
+    if (message.action === "startScrolling") {
+      console.log("startScrolling");
+      startScrolling();
+    } else if (message.action === "stopScrolling") {
+      console.log("stopScrolling");
+      stopScrolling();
+    }
+    if(message.action === "sendState"){
+      let state = {}
+      state.id = message.data
+      state.clickEnabled = clickEnabled
+      state.scrollEnabled = scrollEnabled
+      chrome.runtime.sendMessage({ action: "currentState", data: state  });
+    }
+   
+  });
+  
 // Function to find an element containing specific text
 function findElementByText(text) {
   const elements = document.querySelectorAll("*");
@@ -93,41 +124,7 @@ function stopClicking() {
   clearInterval(clickInterval);
 }
 
-// Event listeners for enabling/disabling the clicker
-chrome.runtime.onMessage.addListener((message) => {
-  if (message.action === "startClicking") {
-    console.log("startClicking");
-    startClicking();
-  } else if (message.action === "stopClicking") {
-    console.log("stopClicking");
-    stopClicking();
-  }
 
-  if (message.action === "startScrolling") {
-    console.log("startScrolling");
-    startScrolling();
-  } else if (message.action === "stopScrolling") {
-    console.log("stopScrolling");
-    stopScrolling();
-  }
-});
-
-let scrollDirection = "down"; // Keep track of the current direction
-let scrollInterval;
-let scrollEnabled = false;
-// Function to scroll half a page
-function scrollHalfPage() {
-  const scrollAmount = window.innerHeight; // Half the viewport height
-  if (scrollDirection === "down") {
-    console.log("......scrolling down");
-    window.scrollBy(0, scrollAmount);
-    scrollDirection = "up"; // Change direction to up
-  } else {
-    console.log("......scrolling up");
-    window.scrollBy(0, -scrollAmount);
-    scrollDirection = "down"; // Change direction to down
-  }
-}
 
 // Function to start alternating scrolling
 function startScrolling() {
@@ -140,7 +137,6 @@ function startScrolling() {
   scrollInterval = setInterval(() => {
     if (scrollEnabled) {
       console.log(`mouseeven: ${mouse_event}`);
-      //scrollHalfPage();
       
       createMouseEvent(mouse_event, run_buttons[run_button_index]);
 

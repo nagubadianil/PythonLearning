@@ -1,26 +1,71 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Random Actions</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 10px;
-    }
-    button {
-      display: block;
-      margin: 10px 0;
-      padding: 10px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-  <h3>Random Actions</h3>
-  <button id="toggleClick">Enable Random Clicks</button>
-  <button id="toggleScroll">Enable Random Scrolling</button>
+  <head>
+    <title>Random Actions</title>
+    <style>
+      .popupContainer {
+        width: 192px;
+        /* 2 inches */
+        height: 150px;
+        /* 4 inches */
+        margin: 0;
+        padding: 10px;
+        box-sizing: border-box;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
 
-  <script src="popup.js"></script>
-</body>
+        /* Align text inside the container */
+      }
+
+      .ToggleButton {
+        width: 150px;
+        height: 30px;
+        margin-left: 0;
+        margin-right: 0;
+        margin-top: 20px;
+        margin-bottom: 20px;
+
+        font-weight: bold;
+        color: #000; /* Bold text color (black) */
+        background-color: #add8e6; /* Light blue background */
+
+        /* Flexbox to center content */
+        display: flex;
+        justify-content: center;
+        /* Horizontal centering */
+        align-items: center;
+        /* Vertical centering */
+        text-align: center;
+      }
+
+      .ToggleButtonEnabled {
+        width: 150px;
+        height: 30px;
+        margin-left: 0;
+        margin-right: 0;
+        margin-top: 20px;
+        margin-bottom: 20px;
+
+        font-weight: bold;
+        color: #000; /* Bold text color (black) */
+        background-color: #05970c; /* Light blue background */
+
+        /* Flexbox to center content */
+        display: flex;
+        justify-content: center;
+        /* Horizontal centering */
+        align-items: center;
+        /* Vertical centering */
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Random Actions</h3>
+    <div class="popupContainer">
+      <div class="ToggleButton" id="toggleClick">Enable Random Clicks</div>
+      <div class="ToggleButton" id="toggleScroll">Enable Random Scrolling</div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
 </html>

@@ -2,6 +2,7 @@ import google.generativeai as genai
 import os
 import eyed3
 import time
+import re
 
 # Configure with your API key
 genai.configure(api_key="AIzaSyD99y8NSlHxoP3p-zlhrkvh3PTIXh7c6sE")
@@ -48,6 +49,30 @@ def get_media_information(mp3_file_path):
       print("$"*90) 
       return "Exception:"+str(e)  
  
+def sanitize_filename(filename):
+    # For Windows, remove invalid characters: \ / : * ? " < > |
+    windows_invalid_chars = r'[<>:"/\\|?*]'
+    
+    # For Linux and macOS, remove the forward slash if present in filenames
+    linux_mac_invalid_chars = r'[\/]'
+    
+    # Replace invalid characters with an underscore (_)
+    sanitized_filename = re.sub(windows_invalid_chars, '_', filename)  # Replace Windows invalid chars
+    sanitized_filename = re.sub(linux_mac_invalid_chars, '_', sanitized_filename)  # Replace / for Linux/Mac paths
+    
+    # Remove control characters (non-printable)
+    sanitized_filename = re.sub(r'[\x00-\x1F\x7F]', '', sanitized_filename)
+    
+    # Trim leading/trailing spaces
+    sanitized_filename = sanitized_filename.strip()
+
+    # Handle reserved names for Windows (e.g., CON, PRN, AUX, etc.)
+    reserved_names = ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9']
+    if sanitized_filename.upper() in reserved_names:
+        sanitized_filename = f'_{sanitized_filename}'
+
+    return sanitized_filename
+
 
 def rename_and_add_metadata(lyrics_text, meta_data, mp3_file_path):
    
@@ -69,7 +94,9 @@ def rename_and_add_metadata(lyrics_text, meta_data, mp3_file_path):
     # If Title is not found, use the first 10 words from lyrics
     if title == "Not Found":
         title = ' '.join(lyrics_text.split()[:10])
+              
         title = title[:45]
+        title = sanitize_filename(title)
         title = title.title()
         
     audiofile.tag.title = title  # Title case for Title
