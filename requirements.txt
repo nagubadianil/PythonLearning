@@ -1,0 +1,15 @@
+colorama==0.4.6
+Jinja2==3.1.4
+typing_extensions==4.12.2
+click==8.1.7
+SQLAlchemy==2.0.36
+MarkupSafe==3.0.2
+Module config not found==None
+blinker==1.9.0
+Flask==3.1.0
+Module main not found==None
+itsdangerous==2.2.0
+Flask-SQLAlchemy==3.1.1
+Werkzeug==3.1.3
+Module models not found==None
+greenlet==3.1.1
