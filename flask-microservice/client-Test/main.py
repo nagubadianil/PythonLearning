@@ -1,7 +1,7 @@
 import requests
 import json
 
-BASE_URL = 'http://127.0.0.1:5000'  # Change to your API base URL if different
+BASE_URL = 'https://q8qmdclj-5001.use.devtunnels.ms'  # Change to your API base URL if different
 
 # Create an employee
 def create_employee(name, email, position):
@@ -15,7 +15,7 @@ def create_employee(name, email, position):
     if response.status_code == 201:
         print(f"Employee created: {name}")
     else:
-        print(f"Failed to create employee: {response.json()}")
+        print(f"Failed to create employee")
 
 # Get the list of employees
 def get_employees():
@@ -35,7 +35,7 @@ def get_employee_by_id(employee_id):
         employee = response.json()
         print(f"Employee: {json.dumps(employee, indent=2)}")
     else:
-        print(f"Failed to get employee with ID {employee_id}: {response.json()}")
+        print(f"Failed to get employee with ID {employee_id}")
 
 # Update an employee
 def update_employee(employee_id, name, email, position):
@@ -49,7 +49,7 @@ def update_employee(employee_id, name, email, position):
     if response.status_code == 200:
         print(f"Employee with ID {employee_id} updated")
     else:
-        print(f"Failed to update employee with ID {employee_id}: {response.json()}")
+        print(f"Failed to update employee with ID {employee_id}")
 
 # Delete an employee
 def delete_employee(employee_id):
@@ -58,7 +58,7 @@ def delete_employee(employee_id):
     if response.status_code == 200:
         print(f"Employee with ID {employee_id} deleted")
     else:
-        print(f"Failed to delete employee with ID {employee_id}: {response.json()}")
+        print(f"Failed to delete employee with ID {employee_id}")
 
 # Upload profile image for an employee
 def upload_profile_image(employee_id, image_path):
@@ -69,7 +69,7 @@ def upload_profile_image(employee_id, image_path):
         if response.status_code == 200:
             print(f"Profile image uploaded for employee with ID {employee_id}")
         else:
-            print(f"Failed to upload image: {response.json()}")
+            print(f"Failed to upload image")
 
 # Download the CSV of employees
 def download_employees_csv():
@@ -80,13 +80,13 @@ def download_employees_csv():
             f.write(response.content)
         print("CSV file of employees downloaded as 'employees.csv'")
     else:
-        print(f"Failed to download CSV: {response.json()}")
+        print(f"Failed to download CSV")
 
 # Main function to perform all operations
 def main():
     # 1. Create Employees
-    create_employee("Alice Smith", "alice.smith@example.com", "Software Developer")
-    create_employee("Bob Johnson", "bob.johnson@example.com", "Product Manager")
+    create_employee("Anil Nagubadi", "nagubadianil@example.com", "Software Developer")
+    create_employee("Amulya Thota", "amulya75@gmail.com", "School Co-ordinater")
     
     # 2. Get All Employees
     get_employees()
@@ -95,7 +95,7 @@ def main():
     get_employee_by_id(1)  # Assuming employee with ID 1 exists
 
     # 4. Update Employee
-    update_employee(1, "Alice Smith Updated", "alice.smith.updated@example.com", "Senior Software Developer")
+    update_employee(1, "Alice Smith", "alice.smith.updated@example.com", "Manager")
     
     # 5. Delete Employee
     delete_employee(2)  # Assuming employee with ID 2 exists
