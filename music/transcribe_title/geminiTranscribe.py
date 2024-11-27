@@ -3,14 +3,14 @@ import os
 import eyed3
 import time
 import re
+import sys
 
 # Configure with your API key
 genai.configure(api_key="AIzaSyD99y8NSlHxoP3p-zlhrkvh3PTIXh7c6sE")
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 def generate_transcription(prompt, mp3_file_path=None):
-  
- 
+
     sample_audio = None
     if mp3_file_path is not None:
         sample_audio = genai.upload_file(mp3_file_path)
@@ -45,7 +45,7 @@ def get_media_information(mp3_file_path):
         return response.text
     except Exception as e:
       print("$"*90)
-      print("Exception e:", str(e))
+      print("get_media_information Exception e:", str(e))
       print("$"*90) 
       return "Exception:"+str(e)  
  
@@ -75,68 +75,76 @@ def sanitize_filename(filename):
 
 
 def rename_and_add_metadata(lyrics_text, meta_data, mp3_file_path):
-   
-    # Load the MP3 file
-    audiofile = eyed3.load(mp3_file_path)
-    
-    # Ensure there is a tag (metadata) object
-    if audiofile.tag is None:
-        audiofile.tag = eyed3.id3.tag.ID3Tag()
 
-    # Parse metadata (already parsed in the function above)
-    title = meta_data.get("Title", "Not Found")
-    genre = meta_data.get("Genre", "Not Found")
-    language = meta_data.get("Language", "Not Found")
-    album = meta_data.get("Album", "")
-    artist = meta_data.get("Artist", "")
-    year = meta_data.get("Year", "")
-
-    # If Title is not found, use the first 10 words from lyrics
-    if title == "Not Found":
-        title = ' '.join(lyrics_text.split()[:10])
-              
-        title = title[:45]
-        title = sanitize_filename(title)
-        title = title.title()
+    try:
+        # Load the MP3 file
+        audiofile = eyed3.load(mp3_file_path)
         
-    audiofile.tag.title = title  # Title case for Title
+        # Ensure there is a tag (metadata) object
+        if audiofile.tag is None:
+            audiofile.tag = eyed3.id3.tag.ID3Tag()
 
-    # If Genre is not found, add "Telugu Songs"
-    if genre == "Not Found":
-        genre = "Telugu Songs"
-    audiofile.tag.genre = genre
+        # Parse metadata (already parsed in the function above)
+        title = meta_data.get("Title", "Not Found")
+        genre = meta_data.get("Genre", "Not Found")
+        language = meta_data.get("Language", "Not Found")
+        album = meta_data.get("Album", "")
+        artist = meta_data.get("Artist", "")
+        year = meta_data.get("Year", "")
 
-    # If Language is not found, add "Telugu"
-    if language == "Not Found":
-        language = "Telugu"
-    audiofile.tag.language = language
+        # If Title is not found, use the first 10 words from lyrics
+        if title == "Not Found":
+            title = ' '.join(lyrics_text.split()[:10])
+                
+            title = title[:45]
+            title = sanitize_filename(title)
+            title = title.title()
+            
+        audiofile.tag.title = title  # Title case for Title
 
-    if artist == "Not Found":
-        artist = ""
-    audiofile.tag.artist = artist
-    
-    if album == "Not Found":
-        album = ""
-    audiofile.tag.album = album
-    
-    if year == "Not Found":
-        year = ""
-    audiofile.tag.year = year
+        # If Genre is not found, add "Telugu Songs"
+        if genre == "Not Found":
+            genre = "Telugu Songs"
+        audiofile.tag.genre = genre
 
-    # Add the lyrics to the tag
-    audiofile.tag.lyrics.set(lyrics_text)
+        # If Language is not found, add "Telugu"
+        if language == "Not Found":
+            language = "Telugu"
+        audiofile.tag.language = language
 
-    # Save the changes to the audio file
-    audiofile.tag.save()
-
-    new_file_path = mp3_file_path
-    if "track_" in mp3_file_path:
-        # Rename the MP3 file
-        new_file_path = os.path.join(os.path.dirname(mp3_file_path), title+".mp3")
-        os.rename(mp3_file_path, new_file_path)
+        if artist == "Not Found":
+            artist = ""
+        audiofile.tag.artist = artist
         
-    return new_file_path  # Return the new file path
+        if album == "Not Found":
+            album = ""
+        audiofile.tag.album = album
+        
+        if year == "Not Found":
+            year = ""
+        audiofile.tag.year = year
 
+        # Add the lyrics to the tag
+        audiofile.tag.lyrics.set(lyrics_text)
+
+        # Save the changes to the audio file
+        audiofile.tag.save()
+
+        new_file_path = mp3_file_path
+        if "track_" in mp3_file_path:
+            # Rename the MP3 file
+            new_file_path = os.path.join(os.path.dirname(mp3_file_path), title+".mp3")
+            os.rename(mp3_file_path, new_file_path)
+            
+        return new_file_path  # Return the new file path
+
+    except Exception as e:
+        print("$"*90)
+        print("rename_and_add_metadata Exception e:", str(e))
+        print("$"*90) 
+        return "Exception:"+str(e)  
+ 
+    
 def parse_metadata(text):
 
     metadata = {}
@@ -168,7 +176,7 @@ def add_meta_data_to_mp3(response_text, mp3_file_path = "vocals.mp3"):
     print(f"New file created at: {new_file_path}")
     return new_file_path 
     
-def test_extract():
+def test_extract(mp3_file_path = "vocals.mp3"):
     response_text = """
 Hey natja venne isam bode nuvena rajakumari
 Hey ajjare raja janile jare leta javanile
@@ -210,7 +218,7 @@ Genre: Folk
 Language: Telugu
 Year: Not Found
     """
-    mp3_file_path = "vocals.mp3"
+    
     add_meta_data_to_mp3(response_text, mp3_file_path)
 
 def transcribe_and_add_meta_data(vocals_file_path = "vocals.mp3", destination_file_path = "vocals.mp3"):
@@ -254,11 +262,12 @@ def rename_vocals(vocals_path,mp3_path):
         return new_path 
 def process_separated_files():
     root_folder = "C:/Users/nagub/Music/Telugu"
+    count = 0
+    skipcount = 0
     for vocals_path, mp3_path in file_iterator(root_folder):
         print(f"!!vocals: {vocals_path}")
         print(f"!!mp3_path {mp3_path}")
        
-        
         new_mp3_path = transcribe_and_add_meta_data(vocals_file_path = vocals_path, destination_file_path = mp3_path)
         
         if "Exception" not in new_mp3_path:
@@ -268,12 +277,56 @@ def process_separated_files():
             
             print(f"!!new_vocals_root_path:", new_vocals_root_path)
             print("+"*60)
-
-if __name__=="__main__":   
-    #transcribe_audio()
-    #add_meta_data_to_mp3()
-    #get_media_information()
-    #test_extract()
+            count+=1
+        else:
+            print(f"Skipping: {mp3_path}\n Error: {new_mp3_path}")
+            skipcount+=1
     
-    #transcribe_and_add_meta_data()
-    process_separated_files()
+    print(f"All Done, for now! count: {count} skipcount:{skipcount}")
+        
+def run_every_hour():
+    from datetime import datetime
+    import pytz  
+    
+    count = 1 
+    while True:
+        cst_timezone = pytz.timezone("US/Central")
+        now_cst = datetime.now(cst_timezone)
+        formatted_time = now_cst.strftime("%B %d, %Y %I:%M:%S %p")
+        print("*"*70)
+        print("*"*70)
+        print(f"{count} Started new  run: ", formatted_time)
+        
+        try:
+            process_separated_files()     
+        except Exception as e:
+            print("EXCEPTION e:" + str(e))
+            
+        print("^"*70)
+        print("^"*70)
+        cst_timezone = pytz.timezone("US/Central")
+        now_cst = datetime.now(cst_timezone)
+        formatted_time = now_cst.strftime("%B %d, %Y %I:%M:%S %p")
+        
+        print(f"{count} Waiting... for 1 hour... started at: ", formatted_time)
+        time.sleep(3600) 
+        count+=1
+        
+        
+if __name__=="__main__":   
+    
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "loop":
+            run_every_hour()
+        elif sys.argv[1] == "run_once":
+            process_separated_files()
+        elif sys.argv[1] == "add_meta_data":
+            mp3_file_path = "vocals.mp3"
+            test_extract(mp3_file_path)
+        elif sys.argv[1] == "gen_info":
+            mp3_file_path = "vocals.mp3"
+            get_media_information(mp3_file_path)
+        else:
+            print("Your arguments didn't make sense")
+    else:  
+        pass

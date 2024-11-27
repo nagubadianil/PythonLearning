@@ -58,16 +58,17 @@ def download_audio_only():
     yt_dlp_download_youtube_playlist(single_video_or_playlist_url, download_folder, type="audio")
  
 def download_video_only():
-    single_video_or_playlist_url = "https://www.youtube.com/watch?v=6foqGD24WqU"
+    single_video_or_playlist_url = "https://www.youtube.com/watch?v=3C1n5lqGdmY"
   
-    download_folder = "C:/Users/nagub/Videos/Dhivara"
+    download_folder = "C:/Users/nagub/Videos"
  
     #  set type="video". Optionally set resolution to 240, 360, 720, or 1080 or any other. If you don't set, it will download at highest
-    yt_dlp_download_youtube_playlist(single_video_or_playlist_url, download_folder, type="video", resolution="1080")
+    yt_dlp_download_youtube_playlist(single_video_or_playlist_url, download_folder, type="video", resolution=None)
     
 # Example usage
 if __name__ == "__main__":
-    download_audio_only()
+    #download_audio_only()
+    download_video_only()
     
     
   
