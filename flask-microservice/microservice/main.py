@@ -152,6 +152,35 @@ def main():
     if __name__ == "__main__":
         main()
     </code></pre>
+    
+    <h2>Get Stock Price: Get API KEY: https://www.alphavantage.co/</h2>
+    <pre><code class="language-python">
+def get_stock_price(symbol):
+    base_url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "GLOBAL_QUOTE",
+        "symbol": symbol,
+        "apikey": "R6DDHEI0K6I0ZX5R"
+    }
+    response = requests.get(base_url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        if "Global Quote" in data:
+            price = data["Global Quote"]["05. price"]
+            return f"The current price of {symbol} is ${price}."
+        else:
+            return f"Error: Unable to fetch stock price for {symbol}."
+    else:
+        return f"Error: API request failed."
+    </code></pre>
+           <h2>main guard</h2>
+    <pre><code class="language-python">
+    if __name__ == "__main__":
+        #main()
+        print(get_stock_price("AAPL"))
+        print(get_stock_price("SBIN.BO"))
+    </code></pre>
 </body>
 </html>
     """
