@@ -46,18 +46,16 @@ def list_empty_folders_in_voice_separated(root_folder):
                 all_voice_separated_folders.add(voice_separated_path)
                 # Iterate over all child folders in __Voice_Separated__
                 
-                if not os.listdir(voice_separated_path):
+                if os.path.isdir(voice_separated_path) and not os.listdir(voice_separated_path):
                     empty_voice_separted_folders.add(voice_separated_path)
                 else:
                     for child in os.listdir(voice_separated_path):
                         child_path = os.path.join(voice_separated_path, child)
                         if os.path.isdir(child_path) and not os.listdir(child_path):  # Check if folder is empty
-                            try:
-                                empty_voice_separted_folders.add(voice_separated_path)
-                          
-                            except Exception as e:
-                                print(f"Error deleting folder {child_path}: {e}\n\n")
-                            
+                            empty_voice_separted_folders.add(voice_separated_path)
+                        else:
+                            print(f"NOT EMPTY: {child_path}")
+
     full_voice_separated_folders = all_voice_separated_folders - empty_voice_separted_folders
     return empty_voice_separted_folders, full_voice_separated_folders
 
