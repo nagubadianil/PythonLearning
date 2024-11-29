@@ -55,14 +55,15 @@ async function loadMyBookmarks() {
     const bookmarkBar = bookmarkTree[0]; //.find((node) => node.title === "Bookmarks Bar");
 
     const container = document.getElementById("bookmark-tree");
-    const result = await getFromStorage(["all_profiles"]);
 
-    g_all_profiles = JSON.parse(result.all_profiles);
     if (bookmarkBar.children[0].title == "Bookmarks bar") {
+      const result = await getFromStorage(["all_profiles"]);
+      g_all_profiles = JSON.parse(result.all_profiles);
       let bookmarkBarChildren = bookmarkBar.children[0].children;
-      deleteOtherProfilesBookmarks(bookmarkBarChildren);
-    }
 
+      deleteOtherProfilesBookmarks(bookmarkBarChildren, g_all_profiles);
+    }
+    
     if (bookmarkBar) {
       // Load bookmarks from the Bookmarks Bar and pre-check them
       createBookmarkTree(bookmarkBar.children, container, true); // Pre-check all bookmarks
@@ -73,7 +74,7 @@ async function loadMyBookmarks() {
   });
 }
 
-function deleteOtherProfilesBookmarks(bookmarkBarChildren) {
+function deleteOtherProfilesBookmarks(bookmarkBarChildren, g_all_profiles) {
   for (const profile of g_all_profiles) {
     let index = 0;
     for (const child of bookmarkBarChildren) {
@@ -82,6 +83,48 @@ function deleteOtherProfilesBookmarks(bookmarkBarChildren) {
         break
       }
       index++;
+    }
+  }
+}
+
+function calculateCheckedForProfiles(g_all_profiles) {
+  chrome.bookmarks.getTree(async (bookmarkTree) => {
+    const bookmarkBar = bookmarkTree[0];
+    let bookmarkBarChildren = bookmarkBar.children[0].children;
+    if (bookmarkBar.children[0].title == "Bookmarks bar") {
+
+      for (const profile of g_all_profiles) {
+          
+        for (const child of bookmarkBarChildren) {
+          if (child.title == profile.profileName) {
+            const destinationBookmarks = profile.bookmarks[0].children;
+            const sourceBookmarks = child.children[0].children
+            updateCheckedProperty(sourceBookmarks, destinationBookmarks);
+          }
+       
+        }
+      }
+
+    }
+  });
+}
+function updateCheckedProperty(source, destination) {
+  if (!Array.isArray(source) || !Array.isArray(destination)) return;
+
+  for (const destItem of destination) {
+    // Check if a matching item exists in the source hierarchy at the same level
+    const matchingSource = source.find(
+      srcItem => srcItem.title === destItem.title
+    );
+
+    // If a match is found, set the `checked` property to true
+    if (matchingSource) {
+      destItem.checked = true;
+    }
+
+    // Recursively process children
+    if (destItem.children && matchingSource?.children) {
+      updateCheckedProperty(matchingSource.children, destItem.children);
     }
   }
 }
@@ -114,8 +157,10 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.value = bookmark.url || bookmark.id; // Use URL for bookmarks, ID for folders
-    checkbox.checked = preCheck; // Pre-check if specified
+   
     checkbox.style.transform = "scale(1.2)";
+
+    checkbox.checked = bookmark.checked
 
     checkbox.addEventListener("change", function () {
       if (this.checked) {
@@ -130,7 +175,7 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
     title.style.overflowWrap = "break-word"; // Break long words to prevent overflo
 
     // If the bookmark is a folder, recursively create children
-    if (bookmark.children) {
+    if (bookmark.children && bookmark.children.length > 0) {
       const ul = document.createElement("ul");
       ul.style.marginBottom = "5px";
       ul.style.marginTop = "5px";
@@ -144,7 +189,7 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
       toggleButton.style.marginLeft = "10px";
       toggleButton.style.background = "none"; // Remove background
       toggleButton.style.border = "none"; // Remove border for a cleaner look
-      toggleButton.style.fontSize = "14px"; // Make button text smaller
+      toggleButton.style.fontSize = "18px"; // Make button text smaller
       toggleButton.style.padding = "0"; // Remove padding to make it more compact
       toggleButton.style.cursor = "pointer"; // Change the cursor to pointer to indicate it's clickable
       toggleButton.style.outline = "none";
@@ -165,11 +210,10 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
       li.appendChild(checkbox);
       li.appendChild(title);
 
-      let skip = false;
 
-      if (!skip) {
-        createBookmarkTree(bookmark.children, ul, preCheck); // Await recursive call
-      }
+    
+      createBookmarkTree(bookmark.children, ul, preCheck); // Await recursive call
+      
 
       li.appendChild(ul); // Append the UL (children list) to the li
     } else {
@@ -237,9 +281,9 @@ function renderOtherBookmarks(bookmarksData) {
     bookmarksContainer.style.paddingLeft = "20px";
     profileSection.appendChild(bookmarksContainer);
 
-    const nestedStructure = createBookmarkStructure(profile.bookmarksTable);
+   
     // Render bookmarks for the profile
-    createBookmarkTree(nestedStructure, bookmarksContainer);
+    createBookmarkTree(profile.bookmarks, bookmarksContainer);
 
     // Append profile section to the main container
     container.appendChild(profileSection);
@@ -290,20 +334,22 @@ async function testOtherBookmark() {
   const bookmarksData = [
     {
       profileName: "Anil 1",
-      bookmarksTable: bookmarks1,
+      bookmarks: createBookmarkStructure(bookmarks1),
     },
     {
       profileName: "Anil 2",
-      bookmarksTable: bookmarks2,
+      bookmarks: createBookmarkStructure(bookmarks2),
     },
   ];
 
-  await setToStorage({ all_profiles: JSON.stringify(bookmarksData) });
+ 
   const result = await getFromStorage(["all_profiles"]);
-  console.log("result: ", result);
   g_all_profiles = JSON.parse(result.all_profiles);
+  calculateCheckedForProfiles(g_all_profiles) 
+  
+  await setToStorage({ all_profiles: JSON.stringify(g_all_profiles) });
 
-  renderOtherBookmarks(bookmarksData);
+  renderOtherBookmarks(g_all_profiles);
   // Create container for the bookmarks
 
   //const container = document.getElementById("other-bookmarks");
