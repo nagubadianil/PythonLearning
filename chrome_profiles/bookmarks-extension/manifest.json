@@ -1,0 +1,35 @@
+{
+    "manifest_version": 3,
+    "name": "Bookmark Sharer",
+    "version": "1.0",
+    "description": "Reads bookmarks and shares them to a Google Sheet.",
+    "permissions": [
+        "identity",                    
+        "storage",                      
+        "activeTab",                   
+        "bookmarks"                    
+      ],
+      "oauth2": {
+        "client_id": "281373837659-j6u3qj5tde98g15a087i7tltrm0njdoj.apps.googleusercontent.com", 
+        "scopes": [
+          "https://www.googleapis.com/auth/spreadsheets", 
+          "https://www.googleapis.com/auth/userinfo.email"  
+        ]
+      },
+    "host_permissions": [
+        "https://sheets.googleapis.com/", 
+        "https://www.googleapis.com/*" 
+     ],
+    "background": {
+        "service_worker": "background.js"
+      },
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+        "16": "icon.png",
+        "48": "icon.png",
+        "128": "icon.png"
+      }
+    }
+  }
+  

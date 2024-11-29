@@ -233,6 +233,7 @@ def file_iterator(root_folder):
 
     for dirpath, _, filenames in os.walk(root_folder):
         for filename in filenames:
+            print(f"dirpath:{dirpath} filename: {filename}")
             # Yielding all files named 'vocals.mp3'
             if filename.lower() == 'vocals.mp3':
                 vocals_path = os.path.join(dirpath, filename)
@@ -260,8 +261,8 @@ def rename_vocals(vocals_path,mp3_path):
         os.rename(parent_folder, new_path)
         
         return new_path 
-def process_separated_files():
-    root_folder = "C:/Users/nagub/Music/Telugu"
+def process_separated_files( root_folder = "C:/Users/nagub/Music/Telugu"):
+   
     count = 0
     skipcount = 0
     for vocals_path, mp3_path in file_iterator(root_folder):
@@ -314,12 +315,12 @@ def run_every_hour():
         
         
 if __name__=="__main__":   
-    
+    root_folder = r"C:\Users\nagub\Music\Bhavesh_Music"
     if len(sys.argv) > 1:
         if sys.argv[1] == "loop":
             run_every_hour()
         elif sys.argv[1] == "run_once":
-            process_separated_files()
+            process_separated_files(root_folder)
         elif sys.argv[1] == "add_meta_data":
             mp3_file_path = "vocals.mp3"
             test_extract(mp3_file_path)

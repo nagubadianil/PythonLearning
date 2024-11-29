@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bookmark Manager</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body >
+  <h1>Bookmarks</h1>
+
+  <!-- My Profile Input -->
+  <label for="profile-name">My Profile:</label>
+  <input type="text" id="profile-name" placeholder="Enter your profile name" />
+
+  <!-- Container for the current user's bookmarks -->
+  <div id="my-bookmarks">
+    <h2>Your Bookmarks (<span id="my-profile">(mine)</span>):</h2>
+    <div id="bookmark-tree"></div>
+  </div>
+
+  <!-- Container for other profiles' bookmarks -->
+  <div id="other-bookmarks">
+    <h2>Friend's Bookmarks:</h2>
+    <div id="profiles-container"></div>
+  </div>
+
+  <!-- Action Buttons -->
+  <button id="share-btn">Share to Google Sheet</button>
+  <button id="add-btn">Add Selected to My Bookmarks</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>

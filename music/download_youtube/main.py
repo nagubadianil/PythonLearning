@@ -50,9 +50,9 @@ def yt_dlp_download_youtube_playlist(playlist_url, download_folder, type="audio"
         
 def download_audio_only():
    
-    single_video_or_playlist_url = "https://www.youtube.com/watch?v=K7z89y2rn_U&list=PL0ZpYcTg19EF-Ofh_qRkVBqSVeEnRcuN9&index=1"
+    single_video_or_playlist_url = "https://www.youtube.com/watch?v=TRqPNoB7D60"
   
-    download_folder = "C:/Users/nagub/Music/Telugu/Keeravani"
+    download_folder = r"C:\Users\nagub\Music\Bhavesh_Music"
  
     #set type="audio" for mp3 download
     yt_dlp_download_youtube_playlist(single_video_or_playlist_url, download_folder, type="audio")
@@ -67,8 +67,8 @@ def download_video_only():
     
 # Example usage
 if __name__ == "__main__":
-    #download_audio_only()
-    download_video_only()
+    download_audio_only()
+    #download_video_only()
     
     
   
