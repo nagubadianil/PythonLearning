@@ -1,4 +1,3 @@
-let g_all_profiles = null;
 
 // Load the extension on popup open
 document.addEventListener("DOMContentLoaded", async () => {
@@ -58,10 +57,16 @@ async function loadMyBookmarks() {
 
     if (bookmarkBar.children[0].title == "Bookmarks bar") {
       const result = await getFromStorage(["all_profiles"]);
-      g_all_profiles = JSON.parse(result.all_profiles);
+      const g_all_profiles = JSON.parse(result.all_profiles);
       let bookmarkBarChildren = bookmarkBar.children[0].children;
 
       deleteOtherProfilesBookmarks(bookmarkBarChildren, g_all_profiles);
+    }
+    if(bookmarkBar.children.length > 1 && bookmarkBar.children[1]
+      && bookmarkBar.children[1].title == "Other bookmarks"
+     )
+    {
+      bookmarkBar.children.splice(1, 1);
     }
     
     if (bookmarkBar) {
@@ -88,17 +93,21 @@ function deleteOtherProfilesBookmarks(bookmarkBarChildren, g_all_profiles) {
 }
 
 function calculateCheckedForProfiles(g_all_profiles) {
+ 
   chrome.bookmarks.getTree(async (bookmarkTree) => {
+    
     const bookmarkBar = bookmarkTree[0];
     let bookmarkBarChildren = bookmarkBar.children[0].children;
     if (bookmarkBar.children[0].title == "Bookmarks bar") {
-
+     
       for (const profile of g_all_profiles) {
-          
+        
         for (const child of bookmarkBarChildren) {
+         
           if (child.title == profile.profileName) {
-            const destinationBookmarks = profile.bookmarks[0].children;
-            const sourceBookmarks = child.children[0].children
+            const destinationBookmarks = profile.bookmarks//[0].children;
+            const sourceBookmarks = child.children//[0].children
+          
             updateCheckedProperty(sourceBookmarks, destinationBookmarks);
           }
        
@@ -109,9 +118,13 @@ function calculateCheckedForProfiles(g_all_profiles) {
   });
 }
 function updateCheckedProperty(source, destination) {
-  if (!Array.isArray(source) || !Array.isArray(destination)) return;
-
+  
+ // console.log(`updateCheckedProperty beg destination ${destination} length: ${destination.length}`)
+  if(!destination || !destination.length)
+    return
+  
   for (const destItem of destination) {
+   
     // Check if a matching item exists in the source hierarchy at the same level
     const matchingSource = source.find(
       srcItem => srcItem.title === destItem.title
@@ -119,6 +132,7 @@ function updateCheckedProperty(source, destination) {
 
     // If a match is found, set the `checked` property to true
     if (matchingSource) {
+    
       destItem.checked = true;
     }
 
@@ -159,7 +173,8 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
     checkbox.value = bookmark.url || bookmark.id; // Use URL for bookmarks, ID for folders
    
     checkbox.style.transform = "scale(1.2)";
-
+    checkbox.style.marginRight = "5px";
+    
     checkbox.checked = bookmark.checked
 
     checkbox.addEventListener("change", function () {
@@ -173,7 +188,7 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
     title.style.fontSize = "14px"; // Increase font size for the title
     title.style.whiteSpace = "normal"; // Allow title to wrap if necessary
     title.style.overflowWrap = "break-word"; // Break long words to prevent overflo
-
+  
     // If the bookmark is a folder, recursively create children
     if (bookmark.children && bookmark.children.length > 0) {
       const ul = document.createElement("ul");
@@ -185,14 +200,16 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
       // Create a button for expand/collapse
       const toggleButton = document.createElement("button");
       toggleButton.textContent = "+"; // Initially show as expandable
-      toggleButton.style.marginRight = "10px";
-      toggleButton.style.marginLeft = "10px";
+      toggleButton.style.marginRight = "5px";
+   
       toggleButton.style.background = "none"; // Remove background
       toggleButton.style.border = "none"; // Remove border for a cleaner look
       toggleButton.style.fontSize = "18px"; // Make button text smaller
       toggleButton.style.padding = "0"; // Remove padding to make it more compact
       toggleButton.style.cursor = "pointer"; // Change the cursor to pointer to indicate it's clickable
       toggleButton.style.outline = "none";
+      toggleButton.style.alignItems = "center";
+
 
       // Toggle the UL visibility when the button is clicked
       toggleButton.addEventListener("click", () => {
@@ -205,6 +222,7 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
         }
       });
       // Use flexbox to align elements in a row
+    
 
       li.appendChild(toggleButton); // Append the button to the li
       li.appendChild(checkbox);
@@ -217,8 +235,15 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
 
       li.appendChild(ul); // Append the UL (children list) to the li
     } else {
+      const lockSpan = document.createElement("span");
+      lockSpan.innerHTML = "&#128278;"; 
+      
+      title.textContent = ""
+      title.innerHTML = `<a href="${bookmark.url}" >${bookmark.title} </a>`
+
+      li.appendChild(lockSpan)
       li.appendChild(checkbox);
-      li.appendChild(document.createTextNode(bookmark.title));
+      li.appendChild(title);
     }
 
     container.appendChild(li);
@@ -344,10 +369,12 @@ async function testOtherBookmark() {
 
  
   const result = await getFromStorage(["all_profiles"]);
-  g_all_profiles = JSON.parse(result.all_profiles);
+  let g_all_profiles = JSON.parse(result.all_profiles);
+  console.log("before calculateCheckedForProfiles called")
   calculateCheckedForProfiles(g_all_profiles) 
   
   await setToStorage({ all_profiles: JSON.stringify(g_all_profiles) });
+  console.log("g_all_profiles:", JSON.stringify(g_all_profiles,null,2))
 
   renderOtherBookmarks(g_all_profiles);
   // Create container for the bookmarks
