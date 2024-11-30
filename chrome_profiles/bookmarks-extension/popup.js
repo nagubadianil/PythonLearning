@@ -1,22 +1,20 @@
 // Load the extension on popup open
 document.addEventListener("DOMContentLoaded", async () => {
-  loadFriendsBookmarks();
-  loadMyBookmarks();
+  await loadFriendsBookmarks();
+  await loadMyBookmarks();
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
   // Get stored profile name from chrome storage
 
   const response = await sendMessageToRuntime({
-    action: "initialize"
+    action: "initialize",
   });
 
   if (response && response.status === "success") {
-  document.getElementById("profile-name").innerHTML = response.profileName
+    document.getElementById("profile-name").innerHTML = response.profileName;
   } else {
-    
   }
-  
 });
 
 document.getElementById("share-btn").addEventListener("click", async () => {
@@ -36,6 +34,8 @@ document.getElementById("share-btn").addEventListener("click", async () => {
 
   if (response && response.status === "success") {
     console.log("Bookmarks shared successfully!");
+    
+    document.getElementById("refresh-btn").click()
     // Perform additional success actions here
   } else {
     console.error("Failed to share bookmarks.");
@@ -53,27 +53,68 @@ document.getElementById("refresh-btn").addEventListener("click", async () => {
   });
 
   if (response && response.status === "success") {
+
+    console.log("Fetching all profiles successfull")
+
     for (const profile of response.bookmarksData) {
-      const bookmarkObjectArray = [] 
-      for (const row of profile.bookmarks){
-        const bookmarkObject = {}
-        bookmarkObject.title = row[0]
-        bookmarkObject.url = row[1]
-        bookmarkObjectArray.push(bookmarkObject)
-       }
+      const bookmarkObjectArray = [];
+      for (const row of profile.bookmarks) {
+        const bookmarkObject = {};
+        bookmarkObject.title = row[0];
+        bookmarkObject.url = row[1];
+        bookmarkObjectArray.push(bookmarkObject);
+      }
       profile.bookmarks = createBookmarkStructure(bookmarkObjectArray);
     }
     await setToStorage({
       all_profiles: JSON.stringify(response.bookmarksData),
     });
 
-    loadFriendsBookmarks();
-    loadMyBookmarks();
+    await loadFriendsBookmarks();
+    await loadMyBookmarks();
   } else {
     alert("Failed to retrieve all bookmarks.");
     // Handle failure here
   }
 });
+
+async function loadFriendsBookmarks() {
+  const result = await getFromStorage(["all_profiles"]);
+
+  if (!(result && result.all_profiles && result.all_profiles.length)) {
+    return;
+  }
+  let g_all_profiles = JSON.parse(result.all_profiles);
+
+  if (!g_all_profiles) return;
+
+  await calculateCheckedForProfiles(g_all_profiles);
+
+  //await setToStorage({ all_profiles: JSON.stringify(g_all_profiles) });
+  //console.log("g_all_profiles:", JSON.stringify(g_all_profiles, null, 2));
+
+  await renderOtherBookmarks(g_all_profiles);
+}
+
+function getImmediateCheckboxChildren(parentElement) {
+  const checkboxes = [];
+  // Traverse the immediate children of the parent element
+  for (const child of parentElement.children) {
+    // Check if the child is an <input> element of type checkbox
+    if (child.tagName === "INPUT" && child.type === "checkbox") {
+      checkboxes.push(child);
+    }
+    // If the child is an <li>, check its direct children
+    if (child.tagName === "LI") {
+      for (const liChild of child.children) {
+        if (liChild.tagName === "INPUT" && liChild.type === "checkbox") {
+          checkboxes.push(liChild);
+        }
+      }
+    }
+  }
+  return checkboxes;
+}
 // Fetch and display bookmarks from the browser's bookmark bar
 async function loadMyBookmarks() {
   chrome.bookmarks.getTree(async (bookmarkTree) => {
@@ -83,27 +124,26 @@ async function loadMyBookmarks() {
     const bookmarkBar = bookmarkTree[0]; //.find((node) => node.title === "Bookmarks Bar");
 
     const container = document.getElementById("bookmark-tree");
+
+    deleteAllChildren(container);
+
+    const result = await getFromStorage(["all_profiles"]);
+    let g_all_profiles = null
     
-    deleteAllChildren(container)
-
+    if (result && result.all_profiles && result.all_profiles.length) {
+      g_all_profiles = JSON.parse(result.all_profiles);
+    }
+    let bookmarkBarChildren = bookmarkBar.children[0].children;
     if (bookmarkBar.children[0].title == "Bookmarks bar") {
-      const result = await getFromStorage(["all_profiles"]);
-
-      if (result && result.all_profiles && result.all_profiles.length) {
-        const g_all_profiles = JSON.parse(result.all_profiles);
-        if (g_all_profiles) {
-          let bookmarkBarChildren = bookmarkBar.children[0].children;
-
-          deleteOtherProfilesBookmarks(bookmarkBarChildren, g_all_profiles);
-        }
+      if (g_all_profiles) {
+      await calculateCheckedForMyBookmarks(bookmarkBarChildren, g_all_profiles)
+      
+        deleteOtherProfilesBookmarks(bookmarkBarChildren, g_all_profiles);
       }
     }
-    if (
-      bookmarkBar.children.length > 1 &&
-      bookmarkBar.children[1] &&
-      bookmarkBar.children[1].title == "Other bookmarks"
-    ) {
-      bookmarkBar.children.splice(1, 1);
+
+    for (let i = 1; i < bookmarkBar.children.length; i++) {
+      bookmarkBar.children.splice(i, 1);
     }
 
     if (bookmarkBar) {
@@ -132,57 +172,108 @@ function deleteOtherProfilesBookmarks(bookmarkBarChildren, g_all_profiles) {
     }
   }
 }
+async function  calculateCheckedForMyBookmarks(bookmarkBarChildren,g_all_profiles){
+  console.log("START calculateCheckedForMyBookmarks")
+  const result = await getFromStorage(["profileName", "all_profiles"]);
+
+  if (!(result && result.profileName && result.profileName.length &&
+    result.all_profiles && result.all_profiles.length
+   ))
+    return
+    
+  let myProfile = null
+    for( const profile of g_all_profiles){
+      if (profile.profileName == result.profileName)
+      {
+        myProfile = profile
+        console.log("Found my profile!!")
+      }
+    }
+
+    if (myProfile) {
+      const sourceBookmarks = myProfile.bookmarks[0].children; //[0].children;
+      const destinationBookmarks = bookmarkBarChildren; //[0].children
+      updateCheckedProperty(sourceBookmarks, destinationBookmarks);
+    }
+  
+  console.log("END calculateCheckedForMyBookmarks")
+}
 
 function calculateCheckedForProfiles(g_all_profiles) {
-
   return new Promise((resolve, reject) => {
-  chrome.bookmarks.getTree(async (bookmarkTree) => {
-   
-    const result = await getFromStorage(["profileName"]);
-    const bookmarkBar = bookmarkTree[0];
-    let bookmarkBarChildren = bookmarkBar.children[0].children;
-    if (bookmarkBar.children[0].title == "Bookmarks bar") {
-      for (const profile of g_all_profiles) {
+    chrome.bookmarks.getTree(async (bookmarkTree) => {
+      const result = await getFromStorage(["profileName"]);
+      const bookmarkBar = bookmarkTree[0];
+      let bookmarkBarChildren = bookmarkBar.children[0].children;
+      if (bookmarkBar.children[0].title == "Bookmarks bar") {
+        for (const profile of g_all_profiles) {
+          if (
+            result &&
+            result.profileName &&
+            result.profileName == profile.profileName
+          ) {
+            continue;
+          }
 
-          if(result && result.profileName 
-            && result.profileName == profile.profileName){
-              continue
+          for (const child of bookmarkBarChildren) {
+            if (child.title == profile.profileName) {
+              const destinationBookmarks = profile.bookmarks[0].children; //[0].children;
+              const sourceBookmarks = child.children; //[0].children
+              updateCheckedProperty(sourceBookmarks, destinationBookmarks);
             }
-
-        for (const child of bookmarkBarChildren) {
-          if (child.title == profile.profileName) {
-            const destinationBookmarks = profile.bookmarks[0].children; //[0].children;
-            const sourceBookmarks = child.children; //[0].children
-            updateCheckedProperty(sourceBookmarks, destinationBookmarks);
           }
         }
       }
-    }
-    resolve(true)
+      resolve(true);
+    });
   });
-});
 }
 function updateCheckedProperty(source, destination) {
-   console.log(`updateCheckedProperty beg destination ${destination} length: ${destination?.length}`)
   if (!destination || !destination?.length) return;
+  console.log(
+    `updateCheckedProperty beg destination length: ${destination?.length}`
+  );
 
+  let matched = 0;
   for (const destItem of destination) {
     // Check if a matching item exists in the source hierarchy at the same level
-    const matchingSource = source.find(
-      (srcItem) => srcItem.title === destItem.title
-    );
+    // const matchingSource = source.find(
+    //   (srcItem) => srcItem.title === destItem.title
+    // );
+
+    let matchingSource = null;
+
+    let leaf = "FOLDER";
+    if (!(destItem.children && destItem.children.length)) {
+      leaf = "LEAF";
+    }
+
+    //console.log(`---DEST Comparing ${leaf} ${destItem.title}`);
+    for (const srcItem of source) {
+      //console.log(`-----SRC Comparing ${srcItem.title}`);
+      if (destItem.title.trim() == srcItem.title.trim()) {
+        matchingSource = srcItem;
+
+        //console.log("     $$$ Match found!!");
+        break;
+      }
+    }
 
     // If a match is found, set the `checked` property to true
     if (matchingSource) {
       destItem.checked = true;
-      //console.log(`settting ${destItem.title} to true`) 
+      matched++;
     }
 
     // Recursively process children
     if (destItem.children && matchingSource?.children) {
-      updateCheckedProperty(matchingSource.children, destItem.children);
+      destItem.childrenMatched = updateCheckedProperty(
+        matchingSource.children,
+        destItem.children
+      );
     }
   }
+  return matched;
 }
 
 function checkParentCheckboxes(checkbox) {
@@ -201,7 +292,7 @@ function checkParentCheckboxes(checkbox) {
 }
 
 function setAllChildCheckboxes(checkbox, checked) {
-  let parentLi = checkbox.closest("li"); 
+  let parentLi = checkbox.closest("li");
   const checkboxes = parentLi.querySelectorAll('input[type="checkbox"]');
   for (const checkbox of checkboxes) {
     checkbox.checked = checked;
@@ -228,7 +319,6 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
 
     checkbox.checked = bookmark.checked;
 
-
     const title = document.createElement("span");
     title.textContent = bookmark.title;
     title.style.fontSize = "14px"; // Increase font size for the title
@@ -237,15 +327,13 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
 
     // If the bookmark is a folder, recursively create children
     if (bookmark.children && bookmark.children.length > 0) {
-
       checkbox.addEventListener("change", function () {
         if (this.checked) {
           checkParentCheckboxes(this); // Ensure all parent checkboxes are checked
-          
-          setAllChildCheckboxes(this, true)
-        }
-        else {
-          setAllChildCheckboxes(this, false)
+
+          setAllChildCheckboxes(this, true);
+        } else {
+          setAllChildCheckboxes(this, false);
         }
       });
 
@@ -288,11 +376,10 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
 
       li.appendChild(ul); // Append the UL (children list) to the li
     } else {
-
       checkbox.addEventListener("change", function () {
         if (this.checked) {
-          checkParentCheckboxes(this); 
-        }     
+          checkParentCheckboxes(this);
+        }
       });
       const lockSpan = document.createElement("span");
       lockSpan.innerHTML = "&#128278;";
@@ -347,7 +434,7 @@ function createBookmarkStructure(bookmarks) {
 }
 async function deleteElementsWithBookmarkProfile() {
   return new Promise((resolve) => {
-    const elements = document.querySelectorAll('[bookmarkProfile]');
+    const elements = document.querySelectorAll("[bookmarkProfile]");
     for (const element of elements) {
       element.remove();
     }
@@ -359,14 +446,17 @@ async function deleteElementsWithBookmarkProfile() {
 async function renderOtherBookmarks(bookmarksData) {
   const container = document.getElementById("other-bookmarks");
 
-  await deleteElementsWithBookmarkProfile()
+  await deleteElementsWithBookmarkProfile();
   const result = await getFromStorage(["profileName"]);
 
   for (const profile of bookmarksData) {
-    if(result && result.profileName 
-      && result.profileName == profile.profileName){
-        continue
-      }
+    if (
+      result &&
+      result.profileName &&
+      result.profileName == profile.profileName
+    ) {
+      continue;
+    }
 
     const profileSection = document.createElement("div");
     profileSection.style.marginBottom = "20px";
@@ -375,7 +465,7 @@ async function renderOtherBookmarks(bookmarksData) {
     // Create profile header
     const profileHeader = document.createElement("h3");
     profileHeader.textContent = profile.profileName;
-    profileHeader.className = "user-list"
+    profileHeader.className = "user-list";
     profileSection.appendChild(profileHeader);
 
     // Create bookmarks container for the profile
@@ -391,43 +481,6 @@ async function renderOtherBookmarks(bookmarksData) {
   }
 }
 
-async function loadFriendsBookmarks() {
-  const result = await getFromStorage(["all_profiles"]);
-
-  if (!(result && result.all_profiles && result.all_profiles.length)) {
-    return;
-  }
-  let g_all_profiles = JSON.parse(result.all_profiles);
-
-  if (!g_all_profiles) return;
-
-  await calculateCheckedForProfiles(g_all_profiles);
-
-  //await setToStorage({ all_profiles: JSON.stringify(g_all_profiles) });
-   console.log("g_all_profiles:", JSON.stringify(g_all_profiles,null,2))
-
-  await renderOtherBookmarks(g_all_profiles);
-}
-
-function getImmediateCheckboxChildren(parentElement) {
-  const checkboxes = [];
-  // Traverse the immediate children of the parent element
-  for (const child of parentElement.children) {
-    // Check if the child is an <input> element of type checkbox
-    if (child.tagName === "INPUT" && child.type === "checkbox") {
-      checkboxes.push(child);
-    }
-    // If the child is an <li>, check its direct children
-    if (child.tagName === "LI") {
-      for (const liChild of child.children) {
-        if (liChild.tagName === "INPUT" && liChild.type === "checkbox") {
-          checkboxes.push(liChild);
-        }
-      }
-    }
-  }
-  return checkboxes;
-}
 
 function getSelectedBookmarks(root) {
   const checkboxes = getImmediateCheckboxChildren(root);
@@ -485,9 +538,8 @@ async function createBookmarksFromProfiles() {
 
     // Get the selected bookmarks for this profile
     const selectedBookmarks = getSelectedBookmarks(firstUl);
-    
-    if(!selectedBookmarks[0].children)
-      continue
+
+    if (!selectedBookmarks[0].children) continue;
 
     // Now let's create a top-level bookmark using the profile name
     const profileBookmark = {
