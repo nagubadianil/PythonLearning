@@ -1,8 +1,7 @@
-
 // Load the extension on popup open
 document.addEventListener("DOMContentLoaded", async () => {
-  testOtherBookmark();
-  loadMyBookmarks(); // Load bookmarks from the browser
+  loadFriendsBookmarks();
+  loadMyBookmarks();
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -45,6 +44,34 @@ document.getElementById("share-btn").addEventListener("click", async () => {
 document.getElementById("add-btn").addEventListener("click", async () => {
   createBookmarksFromProfiles();
 });
+
+document.getElementById("refresh-btn").addEventListener("click", async () => {
+  const response = await sendMessageToRuntime({
+    action: "fetchAllProfilesBookmarks",
+  });
+
+  if (response && response.status === "success") {
+    for (const profile of response.bookmarksData) {
+      const bookmarkObjectArray = [] 
+      for (const row of profile.bookmarks){
+        const bookmarkObject = {}
+        bookmarkObject.title = row[0]
+        bookmarkObject.url = row[1]
+        bookmarkObjectArray.push(bookmarkObject)
+       }
+      profile.bookmarks = createBookmarkStructure(bookmarkObjectArray);
+    }
+    await setToStorage({
+      all_profiles: JSON.stringify(response.bookmarksData),
+    });
+
+    loadFriendsBookmarks();
+    loadMyBookmarks();
+  } else {
+    alert("Failed to retrieve all bookmarks.");
+    // Handle failure here
+  }
+});
 // Fetch and display bookmarks from the browser's bookmark bar
 async function loadMyBookmarks() {
   chrome.bookmarks.getTree(async (bookmarkTree) => {
@@ -57,18 +84,24 @@ async function loadMyBookmarks() {
 
     if (bookmarkBar.children[0].title == "Bookmarks bar") {
       const result = await getFromStorage(["all_profiles"]);
-      const g_all_profiles = JSON.parse(result.all_profiles);
-      let bookmarkBarChildren = bookmarkBar.children[0].children;
 
-      deleteOtherProfilesBookmarks(bookmarkBarChildren, g_all_profiles);
+      if (result && result.all_profiles && result.all_profiles.length) {
+        const g_all_profiles = JSON.parse(result.all_profiles);
+        if (g_all_profiles) {
+          let bookmarkBarChildren = bookmarkBar.children[0].children;
+
+          deleteOtherProfilesBookmarks(bookmarkBarChildren, g_all_profiles);
+        }
+      }
     }
-    if(bookmarkBar.children.length > 1 && bookmarkBar.children[1]
-      && bookmarkBar.children[1].title == "Other bookmarks"
-     )
-    {
+    if (
+      bookmarkBar.children.length > 1 &&
+      bookmarkBar.children[1] &&
+      bookmarkBar.children[1].title == "Other bookmarks"
+    ) {
       bookmarkBar.children.splice(1, 1);
     }
-    
+
     if (bookmarkBar) {
       // Load bookmarks from the Bookmarks Bar and pre-check them
       createBookmarkTree(bookmarkBar.children, container, true); // Pre-check all bookmarks
@@ -85,7 +118,7 @@ function deleteOtherProfilesBookmarks(bookmarkBarChildren, g_all_profiles) {
     for (const child of bookmarkBarChildren) {
       if (child.title == profile.profileName) {
         bookmarkBarChildren.splice(index, 1);
-        break
+        break;
       }
       index++;
     }
@@ -93,46 +126,35 @@ function deleteOtherProfilesBookmarks(bookmarkBarChildren, g_all_profiles) {
 }
 
 function calculateCheckedForProfiles(g_all_profiles) {
- 
   chrome.bookmarks.getTree(async (bookmarkTree) => {
-    
     const bookmarkBar = bookmarkTree[0];
     let bookmarkBarChildren = bookmarkBar.children[0].children;
     if (bookmarkBar.children[0].title == "Bookmarks bar") {
-     
       for (const profile of g_all_profiles) {
-        
         for (const child of bookmarkBarChildren) {
-         
           if (child.title == profile.profileName) {
-            const destinationBookmarks = profile.bookmarks//[0].children;
-            const sourceBookmarks = child.children//[0].children
-          
+            const destinationBookmarks = profile.bookmarks; //[0].children;
+            const sourceBookmarks = child.children; //[0].children
+
             updateCheckedProperty(sourceBookmarks, destinationBookmarks);
           }
-       
         }
       }
-
     }
   });
 }
 function updateCheckedProperty(source, destination) {
-  
- // console.log(`updateCheckedProperty beg destination ${destination} length: ${destination.length}`)
-  if(!destination || !destination.length)
-    return
-  
+  // console.log(`updateCheckedProperty beg destination ${destination} length: ${destination.length}`)
+  if (!destination || !destination.length) return;
+
   for (const destItem of destination) {
-   
     // Check if a matching item exists in the source hierarchy at the same level
     const matchingSource = source.find(
-      srcItem => srcItem.title === destItem.title
+      (srcItem) => srcItem.title === destItem.title
     );
 
     // If a match is found, set the `checked` property to true
     if (matchingSource) {
-    
       destItem.checked = true;
     }
 
@@ -171,11 +193,11 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.value = bookmark.url || bookmark.id; // Use URL for bookmarks, ID for folders
-   
+
     checkbox.style.transform = "scale(1.2)";
     checkbox.style.marginRight = "5px";
-    
-    checkbox.checked = bookmark.checked
+
+    checkbox.checked = bookmark.checked;
 
     checkbox.addEventListener("change", function () {
       if (this.checked) {
@@ -188,7 +210,7 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
     title.style.fontSize = "14px"; // Increase font size for the title
     title.style.whiteSpace = "normal"; // Allow title to wrap if necessary
     title.style.overflowWrap = "break-word"; // Break long words to prevent overflo
-  
+
     // If the bookmark is a folder, recursively create children
     if (bookmark.children && bookmark.children.length > 0) {
       const ul = document.createElement("ul");
@@ -201,7 +223,7 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
       const toggleButton = document.createElement("button");
       toggleButton.textContent = "+"; // Initially show as expandable
       toggleButton.style.marginRight = "5px";
-   
+
       toggleButton.style.background = "none"; // Remove background
       toggleButton.style.border = "none"; // Remove border for a cleaner look
       toggleButton.style.fontSize = "18px"; // Make button text smaller
@@ -209,7 +231,6 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
       toggleButton.style.cursor = "pointer"; // Change the cursor to pointer to indicate it's clickable
       toggleButton.style.outline = "none";
       toggleButton.style.alignItems = "center";
-
 
       // Toggle the UL visibility when the button is clicked
       toggleButton.addEventListener("click", () => {
@@ -222,26 +243,22 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
         }
       });
       // Use flexbox to align elements in a row
-    
 
       li.appendChild(toggleButton); // Append the button to the li
       li.appendChild(checkbox);
       li.appendChild(title);
 
-
-    
       createBookmarkTree(bookmark.children, ul, preCheck); // Await recursive call
-      
 
       li.appendChild(ul); // Append the UL (children list) to the li
     } else {
       const lockSpan = document.createElement("span");
-      lockSpan.innerHTML = "&#128278;"; 
-      
-      title.textContent = ""
-      title.innerHTML = `<a href="${bookmark.url}" >${bookmark.title} </a>`
+      lockSpan.innerHTML = "&#128278;";
 
-      li.appendChild(lockSpan)
+      title.textContent = "";
+      title.innerHTML = `<a href="${bookmark.url}" >${bookmark.title} </a>`;
+
+      li.appendChild(lockSpan);
       li.appendChild(checkbox);
       li.appendChild(title);
     }
@@ -306,7 +323,6 @@ function renderOtherBookmarks(bookmarksData) {
     bookmarksContainer.style.paddingLeft = "20px";
     profileSection.appendChild(bookmarksContainer);
 
-   
     // Render bookmarks for the profile
     createBookmarkTree(profile.bookmarks, bookmarksContainer);
 
@@ -315,72 +331,22 @@ function renderOtherBookmarks(bookmarksData) {
   }
 }
 
-async function testOtherBookmark() {
-  const bookmarks1 = [
-    { title: "Bookmarks bar", url: "" },
-    { title: "  Tutorials", url: "" },
-    { title: "    Architecture", url: "" },
-    {
-      title: "      How to Interview a Software Architect",
-      url: "http://example.com/architect",
-    },
-    {
-      title: "      Microservices vs SOA",
-      url: "http://example.com/microservices",
-    },
-    { title: "  Tech Domains", url: "" },
-    { title: "    NodeJS", url: "" },
-    {
-      title: "      NodeJS Interview Questions.md · GitHub",
-      url: "http://example.com/nodejs",
-    },
-    { title: "    JavaScript", url: "http://example.com/js" },
-    { title: "    ReactJS", url: "http://example.com/react" },
-    { title: "    React Native", url: "http://example.com/react-native" },
-  ];
-
-  const bookmarks2 = [
-    { title: "Bookmarks bar", url: "" },
-    { title: "  Tutorials", url: "" },
-
-    {
-      title: "      Microservices vs SOA",
-      url: "http://example.com/microservices",
-    },
-    { title: "  Tech Domains", url: "" },
-    { title: "    NodeJS", url: "" },
-    {
-      title: "      NodeJS Interview Questions.md · GitHub",
-      url: "http://example.com/nodejs",
-    },
-    { title: "    JavaScript", url: "http://example.com/js" },
-  ];
-
-  const bookmarksData = [
-    {
-      profileName: "Anil 1",
-      bookmarks: createBookmarkStructure(bookmarks1),
-    },
-    {
-      profileName: "Anil 2",
-      bookmarks: createBookmarkStructure(bookmarks2),
-    },
-  ];
-
- 
+async function loadFriendsBookmarks() {
   const result = await getFromStorage(["all_profiles"]);
+
+  if (!(result && result.all_profiles && result.all_profiles.length)) {
+    return;
+  }
   let g_all_profiles = JSON.parse(result.all_profiles);
-  console.log("before calculateCheckedForProfiles called")
-  calculateCheckedForProfiles(g_all_profiles) 
-  
-  await setToStorage({ all_profiles: JSON.stringify(g_all_profiles) });
-  console.log("g_all_profiles:", JSON.stringify(g_all_profiles,null,2))
+
+  if (!g_all_profiles) return;
+
+  calculateCheckedForProfiles(g_all_profiles);
+
+  //await setToStorage({ all_profiles: JSON.stringify(g_all_profiles) });
+  // console.log("g_all_profiles:", JSON.stringify(g_all_profiles,null,2))
 
   renderOtherBookmarks(g_all_profiles);
-  // Create container for the bookmarks
-
-  //const container = document.getElementById("other-bookmarks");
-  // createBookmarkTree(nestedStructure, container);
 }
 
 function getImmediateCheckboxChildren(parentElement) {
@@ -602,4 +568,57 @@ function sendMessageToRuntime(message) {
       }
     });
   });
+}
+
+async function testOtherBookmark() {
+  const bookmarks1 = [
+    { title: "Bookmarks bar", url: "" },
+    { title: "  Tutorials", url: "" },
+    { title: "    Architecture", url: "" },
+    {
+      title: "      How to Interview a Software Architect",
+      url: "http://example.com/architect",
+    },
+    {
+      title: "      Microservices vs SOA",
+      url: "http://example.com/microservices",
+    },
+    { title: "  Tech Domains", url: "" },
+    { title: "    NodeJS", url: "" },
+    {
+      title: "      NodeJS Interview Questions.md · GitHub",
+      url: "http://example.com/nodejs",
+    },
+    { title: "    JavaScript", url: "http://example.com/js" },
+    { title: "    ReactJS", url: "http://example.com/react" },
+    { title: "    React Native", url: "http://example.com/react-native" },
+  ];
+
+  const bookmarks2 = [
+    { title: "Bookmarks bar", url: "" },
+    { title: "  Tutorials", url: "" },
+
+    {
+      title: "      Microservices vs SOA",
+      url: "http://example.com/microservices",
+    },
+    { title: "  Tech Domains", url: "" },
+    { title: "    NodeJS", url: "" },
+    {
+      title: "      NodeJS Interview Questions.md · GitHub",
+      url: "http://example.com/nodejs",
+    },
+    { title: "    JavaScript", url: "http://example.com/js" },
+  ];
+
+  const bookmarksData = [
+    {
+      profileName: "Anil 1",
+      bookmarks: createBookmarkStructure(bookmarks1),
+    },
+    {
+      profileName: "Anil 2",
+      bookmarks: createBookmarkStructure(bookmarks2),
+    },
+  ];
 }

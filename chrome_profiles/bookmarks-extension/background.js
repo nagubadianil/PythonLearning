@@ -2,11 +2,22 @@ const GOOGLE_SHEET_ID = "1iSFI29fTLPyVMOq25CJEsacxsVWg0OWocIvIIhpmJFE"; // Repla
 chrome.runtime.onInstalled.addListener(() => {
     console.log("Bookmark Extension Installed");
   });
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener( (message, sender, sendResponse) => {
     if (message.action === "shareBookmarks") {
-      authenticate((token) => {
-        updateSheet(token, message.profileName, message.bookmarks);
+      authenticate(async (token) => {
+        await updateSheet(token, message.profileName, message.bookmarks);
+        sendResponse({ status: "success" });
       });
+      return true;
+    }
+    else if(message.action === "fetchAllProfilesBookmarks"){
+      
+      authenticate(async (token) => {
+       const bookmarksData =  await getAllProfilesBookmarks(token)
+       sendResponse({ status: "success", bookmarksData }) 
+      });
+      
+      return true;
     }
   });
 
@@ -20,6 +31,102 @@ chrome.runtime.onInstalled.addListener(() => {
       callback(token); // Pass the token to the callback
     });
   }
+// Function to send data to Google Sheets
+async function updateSheet(token, profileName_notused, bookmarks) {
+  const spreadsheetId = GOOGLE_SHEET_ID; // Replace with your actual Google Sheet ID
+  const profileName = await getProfileName(token) 
+
+  const range = `${profileName}!A1:B`; // Specify the sheet and range
+
+  const sheetId = await createSheetIfNotExists(spreadsheetId, profileName, token);
+  await clearSheetValues(spreadsheetId, token, profileName);
+  const rows = [];
+  // Flatten the bookmarks hierarchy
+  flattenBookmarks(rows, bookmarks);
+  const values = rows;
+
+  const body = {
+    range: range,
+    majorDimension: "ROWS",
+    values: values,
+  };
+
+  // Send PUT request to Google Sheets API
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?valueInputOption=RAW`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    }
+  );
+
+  // Wait for the response to be converted to JSON
+  const data = await response.json();
+  // Log success message with data
+  console.log("Sheet updated successfully:", data);
+}
+async function getAllProfilesBookmarks(token) {
+  const spreadsheetId = GOOGLE_SHEET_ID
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch spreadsheet metadata: ${response.statusText}`
+    );
+  }
+
+  const data = await response.json();
+
+  const bookmarksData = []
+  for (const sheet of data.sheets) {
+    const profile = {}
+    profile.profileName = sheet.properties.title
+    profile.bookmarks = await getSheetData(spreadsheetId, profile.profileName, token)
+    bookmarksData.push(profile)
+  }
+
+  return bookmarksData
+}
+
+async function getSheetData(spreadsheetId, sheetName, token) {
+  const range = `${sheetName}!A:B`; // Range for Column A and Column B
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data: ${response.status} - ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const rows = data.values || []; // Ensure no error if values are empty
+    console.log('Retrieved rows:', rows);
+    return rows;
+  } catch (error) {
+    console.error('Error fetching column data:', error);
+    return [];
+  }
+}
 
   async function getSheetIdByName(spreadsheetId, token, sheetName) {
     const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`, {
@@ -113,44 +220,6 @@ function flattenBookmarks(rows, bookmarks, level = 0) {
 
   // return rows;
 }
-// Function to send data to Google Sheets
-async function updateSheet(token, profileName, bookmarks) {
-  const spreadsheetId = GOOGLE_SHEET_ID; // Replace with your actual Google Sheet ID
-  profileName = await getUserEmail(token);
-  const range = `${profileName}!A1:B`; // Specify the sheet and range
-
-  const sheetId = await createSheetIfNotExists(spreadsheetId, profileName, token);
-  await clearSheetValues(spreadsheetId, token, profileName);
-  const rows = [];
-  // Flatten the bookmarks hierarchy
-  flattenBookmarks(rows, bookmarks);
-  const values = rows;
-
-  const body = {
-    range: range,
-    majorDimension: "ROWS",
-    values: values,
-  };
-
-  // Send PUT request to Google Sheets API
-  const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?valueInputOption=RAW`,
-    {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    }
-  );
-
-  // Wait for the response to be converted to JSON
-  const data = await response.json();
-
-  // Log success message with data
-  console.log("Sheet updated successfully:", data);
-}
 
 
   
@@ -200,6 +269,12 @@ async function createSheetIfNotExists(spreadsheetId, sheetName, token) {
     }
   }
   
+  async function getProfileName(token){
+   let profileName = await getUserEmail(token);
+    profileName = profileName.split("@")[0]
+    return profileName
+  }
+
   // I am not using this 
   async function getUserEmail(token) {
     try {
