@@ -82,6 +82,7 @@ async function loadFriendsBookmarks() {
   const result = await getFromStorage(["all_profiles"]);
 
   if (!(result && result.all_profiles && result.all_profiles.length)) {
+    document.getElementById("refresh-btn").click()
     return;
   }
   let g_all_profiles = JSON.parse(result.all_profiles);
@@ -118,7 +119,7 @@ function getImmediateCheckboxChildren(parentElement) {
 // Fetch and display bookmarks from the browser's bookmark bar
 async function loadMyBookmarks() {
   chrome.bookmarks.getTree(async (bookmarkTree) => {
-    debugger;
+    //debugger;
     // Find the Bookmarks Bar
     //const bookmarkBar = bookmarkTree[0].children.find((node) => node.title === "Bookmarks Bar");
     const bookmarkBar = bookmarkTree[0]; //.find((node) => node.title === "Bookmarks Bar");
@@ -579,10 +580,48 @@ async function addBookmarkToBookmarkBar(bookmark) {
   } else {
     console.log(`Profile folder "${bookmark.title}" already exists.`);
     // Optionally, add children under the existing folder
+   // await deleteAllBookmarksInFolder(existingFolder.id)
     await addBookmarksToFolder(existingFolder.id, bookmark.children);
   }
 }
+function deleteAllBookmarksInFolder(folderId) {
+  return new Promise((resolve, reject) => {
+    // Get all children within the folder
+    chrome.bookmarks.getChildren(folderId, (children) => {
+      if (chrome.runtime.lastError) {
+        reject(`Error fetching bookmarks: ${chrome.runtime.lastError.message}`);
+        return;
+      }
 
+      if (!children || children.length === 0) {
+        resolve("Folder is already empty");
+        return;
+      }
+
+      // Track deletion promises
+      const deletionPromises = [];
+
+      for (const child of children) {
+        const deletePromise = new Promise((res, rej) => {
+          chrome.bookmarks.remove(child.id, () => {
+            if (chrome.runtime.lastError) {
+              rej(`Error deleting bookmark: ${chrome.runtime.lastError.message}`);
+            } else {
+              res();
+            }
+          });
+        });
+
+        deletionPromises.push(deletePromise);
+      }
+
+      // Wait for all deletions to complete
+      Promise.all(deletionPromises)
+        .then(() => resolve("All bookmarks deleted successfully"))
+        .catch((error) => reject(error));
+    });
+  });
+}
 async function addBookmarksToFolder(parentId, bookmarks) {
   // debugger
   for (const bookmark of bookmarks) {
