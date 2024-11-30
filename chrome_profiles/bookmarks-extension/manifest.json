@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "Bookmark Sharer",
+    "name": "Rushi Bookmark Sharing",
     "version": "1.0",
-    "description": "Reads bookmarks and shares them to a Google Sheet.",
+    "description": "Share Bookmarks With Friends.",
     "permissions": [
         "identity",                    
         "storage",                      
@@ -12,7 +12,7 @@
       "oauth2": {
         "client_id": "281373837659-j6u3qj5tde98g15a087i7tltrm0njdoj.apps.googleusercontent.com", 
         "scopes": [
-          "https://www.googleapis.com/auth/spreadsheets", 
+          "https://www.googleapis.com/auth/spreadsheets",
           "https://www.googleapis.com/auth/userinfo.email"  
         ]
       },

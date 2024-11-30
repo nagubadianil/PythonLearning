@@ -30,7 +30,7 @@ document.getElementById("share-btn").addEventListener("click", async () => {
 
   const response = await sendMessageToRuntime({
     action: "shareBookmarks",
-    profileName: profileName,
+    profileName: "",
     bookmarks: selectedBookmarks,
   });
 
