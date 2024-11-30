@@ -19,6 +19,15 @@ chrome.runtime.onMessage.addListener( (message, sender, sendResponse) => {
       
       return true;
     }
+    else if (message.action =="initialize"){
+      authenticate(async (token) => {
+        const profileName =  await getProfileName(token)
+        sendResponse({ status: "success", profileName }) 
+  
+      });
+       
+       return true;
+    }
   });
 
   // Function to authenticate the user with Google
@@ -270,14 +279,48 @@ async function createSheetIfNotExists(spreadsheetId, sheetName, token) {
   }
   
   async function getProfileName(token){
+    // const result = await getFromStorage(["profileName"]);
+  
+    // if(result && result.profileName && result.profileName.length){
+    //   return result.profileName
+    // }
+
    let profileName = await getUserEmail(token);
     profileName = profileName.split("@")[0]
+    
+    await setToStorage({
+      profileName: profileName
+    });
+
     return profileName
   }
 
-  // I am not using this 
+  function getFromStorage(keys) {
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.get(keys, (result) => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  }
+  
+  function setToStorage(data) {
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.set(data, () => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
   async function getUserEmail(token) {
     try {
+     
       const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
         method: 'GET',
         headers: {

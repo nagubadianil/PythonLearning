@@ -7,17 +7,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 document.addEventListener("DOMContentLoaded", async () => {
   // Get stored profile name from chrome storage
 
-  const result = await getFromStorage(["profileName"]);
-  document.getElementById("profile-name").value = result.profileName;
+  const response = await sendMessageToRuntime({
+    action: "initialize"
+  });
+
+  if (response && response.status === "success") {
+  document.getElementById("profile-name").innerHTML = response.profileName
+  } else {
+    
+  }
+  
 });
 
 document.getElementById("share-btn").addEventListener("click", async () => {
-  const profileName = document.getElementById("profile-name").value.trim();
-  if (!profileName) {
-    alert("Please enter a profile name.");
-    return;
-  }
-
   const selectedBookmarks = getSelectedBookmarks(
     document.getElementById("bookmark-tree")
   );
@@ -81,6 +83,8 @@ async function loadMyBookmarks() {
     const bookmarkBar = bookmarkTree[0]; //.find((node) => node.title === "Bookmarks Bar");
 
     const container = document.getElementById("bookmark-tree");
+    
+    deleteAllChildren(container)
 
     if (bookmarkBar.children[0].title == "Bookmarks bar") {
       const result = await getFromStorage(["all_profiles"]);
@@ -111,7 +115,11 @@ async function loadMyBookmarks() {
     }
   });
 }
-
+function deleteAllChildren(element) {
+  while (element.firstChild) {
+    element.removeChild(element.firstChild);
+  }
+}
 function deleteOtherProfilesBookmarks(bookmarkBarChildren, g_all_profiles) {
   for (const profile of g_all_profiles) {
     let index = 0;
@@ -179,6 +187,15 @@ function checkParentCheckboxes(checkbox) {
     parentLi = parentLi.parentElement?.closest("li");
   }
 }
+
+function setAllChildCheckboxes(checkbox, checked) {
+  let parentLi = checkbox.closest("li"); 
+  const checkboxes = parentLi.querySelectorAll('input[type="checkbox"]');
+  for (const checkbox of checkboxes) {
+    checkbox.checked = checked;
+  }
+}
+
 // Function to create a tree view of bookmarks with checkboxes
 function createBookmarkTree(bookmarks, container, preCheck = false) {
   //debugger
@@ -199,11 +216,6 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
 
     checkbox.checked = bookmark.checked;
 
-    checkbox.addEventListener("change", function () {
-      if (this.checked) {
-        checkParentCheckboxes(this); // Ensure all parent checkboxes are checked
-      }
-    });
 
     const title = document.createElement("span");
     title.textContent = bookmark.title;
@@ -213,6 +225,18 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
 
     // If the bookmark is a folder, recursively create children
     if (bookmark.children && bookmark.children.length > 0) {
+
+      checkbox.addEventListener("change", function () {
+        if (this.checked) {
+          checkParentCheckboxes(this); // Ensure all parent checkboxes are checked
+          
+          setAllChildCheckboxes(this, true)
+        }
+        else {
+          setAllChildCheckboxes(this, false)
+        }
+      });
+
       const ul = document.createElement("ul");
       ul.style.marginBottom = "5px";
       ul.style.marginTop = "5px";
@@ -252,6 +276,12 @@ function createBookmarkTree(bookmarks, container, preCheck = false) {
 
       li.appendChild(ul); // Append the UL (children list) to the li
     } else {
+
+      checkbox.addEventListener("change", function () {
+        if (this.checked) {
+          checkParentCheckboxes(this); 
+        }     
+      });
       const lockSpan = document.createElement("span");
       lockSpan.innerHTML = "&#128278;";
 
@@ -303,10 +333,21 @@ function createBookmarkStructure(bookmarks) {
 
   return result;
 }
+async function deleteElementsWithBookmarkProfile() {
+  return new Promise((resolve) => {
+    const elements = document.querySelectorAll('[bookmarkProfile]');
+    for (const element of elements) {
+      element.remove();
+    }
+    resolve();
+  });
+}
 
 // Function to render bookmarks for all profiles
-function renderOtherBookmarks(bookmarksData) {
+async function renderOtherBookmarks(bookmarksData) {
   const container = document.getElementById("other-bookmarks");
+
+  await deleteElementsWithBookmarkProfile()
 
   for (const profile of bookmarksData) {
     const profileSection = document.createElement("div");
@@ -344,7 +385,7 @@ async function loadFriendsBookmarks() {
   calculateCheckedForProfiles(g_all_profiles);
 
   //await setToStorage({ all_profiles: JSON.stringify(g_all_profiles) });
-  // console.log("g_all_profiles:", JSON.stringify(g_all_profiles,null,2))
+   console.log("g_all_profiles:", JSON.stringify(g_all_profiles,null,2))
 
   renderOtherBookmarks(g_all_profiles);
 }
@@ -425,12 +466,15 @@ async function createBookmarksFromProfiles() {
 
     // Get the selected bookmarks for this profile
     const selectedBookmarks = getSelectedBookmarks(firstUl);
+    
+    if(!selectedBookmarks[0].children)
+      continue
 
     // Now let's create a top-level bookmark using the profile name
     const profileBookmark = {
       title: profileName, // Profile name as the title
       url: "", // No URL for the profile itself
-      children: selectedBookmarks, // The selected bookmarks will be children
+      children: selectedBookmarks[0].children, // The selected bookmarks will be children
     };
 
     // Now add this profile bookmark to the user's bookmark bar
