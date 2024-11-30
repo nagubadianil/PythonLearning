@@ -21,4 +21,201 @@ body {
   li {
     margin: 5px 0;
   }
+  .profile-name {
+    font-size: 18px; /* Large enough for readability */
+    font-weight: bold; /* Emphasize the name */
+    color: #333; /* Neutral dark gray for accessibility */
+    text-align: center; /* Center-align the name */
+    margin: 10px 0; /* Add space around the name */
+    padding: 5px; /* Add inner spacing */
+    border: 1px solid #ddd; /* Subtle border for separation */
+    border-radius: 5px; /* Smooth rounded corners */
+    background-color: #f9f9f9; /* Light background for visibility */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    display: inline-block; /* Prevents stretching when used inline */
+  }
+  .app-name {
+    font-size: 24px; /* Large for emphasis */
+    font-weight: 700; /* Bold to stand out */
+    color: #2c3e50; /* Stylish dark blue-gray */
+    text-transform: uppercase; /* Adds a sleek look */
+    letter-spacing: 2px; /* Space between letters for modern feel */
+    text-align: center; /* Center-align for balance */
+    margin: 20px 0; /* Space around the name */
+    padding: 10px; /* Padding for better spacing */
+    border: none; /* Clean look without borders */
+    background: linear-gradient(90deg, #3498db, #9b59b6); /* Gradient for modern effect */
+   
+    border-radius: 10px; /* Smooth edges */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+    display: inline-block; /* Ensures the element fits snugly */
+  }
   
+  .primary-section {
+    margin: 10px auto; /* Center the section */
+    padding: 10px; /* Add internal spacing */
+    border-radius: 12px; /* Smooth rounded corners */
+    background: linear-gradient(135deg, #ffe259, #ffa751); /* Warm and inviting gradient */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+    font-family: 'Arial', sans-serif; /* Clean font */
+    color: #4a4a4a; /* Neutral dark text for readability */
+    transition: box-shadow 0.3s ease, transform 0.2s ease; /* Smooth hover effects */
+  }
+  
+  /* Add hover effect */
+  .primary-section:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+    transform: translateY(-2px); /* Slight lift */
+  }
+  
+  /* Styling for the heading inside primary-section */
+  .primary-section h2 {
+    font-size: 26px; /* Slightly larger for prominence */
+    margin-bottom: 16px; /* Space below heading */
+    text-align: center; /* Center-align heading */
+    text-transform: uppercase; /* Bold and eye-catching */
+    color: #6b3e26; /* Warm, complementary color for the heading */
+    background: linear-gradient(90deg, #ff9a8b, #ff6a88, #ff99ac); /* Vibrant gradient text effect */
+    -webkit-background-clip: text; /* Clip gradient to text */
+    -webkit-text-fill-color: transparent; /* Make non-gradient parts transparent */
+  }
+  
+  .sharing-section {
+    margin: 10px auto; /* Center the section with auto margins */
+    padding: 10px; /* Add some breathing room */
+    border-radius: 12px; /* Smooth, rounded corners */
+    background: linear-gradient(135deg, #f5f7fa, #c3cfe2); /* Stylish gradient */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    font-family: 'Arial', sans-serif; /* Clean, modern font */
+    color: #333; /* Neutral text color for readability */
+    transition: box-shadow 0.3s ease, transform 0.2s ease; /* Smooth interaction effects */
+  }
+  
+  /* Add hover effect for interactivity */
+  .sharing-section:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Enhance shadow on hover */
+    transform: translateY(-2px); /* Slight lift on hover */
+  }
+  
+  /* Styling for the heading inside sharing-section */
+  .sharing-section h2 {
+    font-size: 24px; /* Larger, bold heading size */
+    margin-bottom: 16px; /* Space below heading */
+    text-align: center; /* Center-align heading */
+    text-transform: uppercase; /* Make heading stand out */
+    color: #2c3e50; /* Slightly darker color for the heading */
+    background: linear-gradient(90deg, #4facfe, #00f2fe); /* Gradient text effect */
+    -webkit-background-clip: text; /* Clip gradient to text */
+    -webkit-text-fill-color: transparent; /* Make non-gradient parts transparent */
+  }
+  
+  
+  .fancy-button {
+    display: inline-block;
+    padding: 12px 24px; /* Comfortable padding */
+    font-size: 16px; /* Clear, readable text */
+    font-weight: bold; /* Emphasize button text */
+    text-transform: uppercase; /* Make it stand out */
+    text-decoration: none; /* Remove underline for links */
+    color: #ffffff; /* Text color */
+    background: linear-gradient(135deg, #ff6e7f, #bfe9ff); /* Stylish gradient */
+    border: none; /* Remove border for modern look */
+    border-radius: 30px; /* Rounded corners for a sleek feel */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+    cursor: pointer; /* Pointer to indicate interactivity */
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s ease; /* Smooth transitions */
+  }
+  
+  /* Hover effect */
+  .fancy-button:hover {
+    background: linear-gradient(135deg, #ff9a9e, #c5efff); /* Brighten gradient on hover */
+    transform: translateY(-2px); /* Slight upward motion */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Enhance shadow for hover effect */
+  }
+  
+  /* Active (pressed) state */
+  .fancy-button:active {
+    background: linear-gradient(135deg, #ff6e7f, #bfe9ff); /* Restore original gradient */
+    transform: translateY(0); /* Reset position */
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Subtle pressed effect */
+  }
+  
+  /* Optional focus state */
+  .fancy-button:focus {
+    outline: none; /* Remove default outline */
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.5); /* Highlighted focus */
+  }
+  
+  /* Add a slight ripple effect */
+  .fancy-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease, opacity 0.8s ease;
+    opacity: 0;
+  }
+  
+  .fancy-button:active::after {
+    width: 200px;
+    height: 200px;
+    opacity: 1;
+    transition: 0s;
+  }
+  .columns-container {
+    display: flex; /* Enable flex layout */
+    gap: 20px; /* Space between columns */
+  }
+  
+  .column {
+    flex: 1; /* Make columns equal width */
+    padding: 10px;
+    border: 1px solid #ccc; /* Optional: Add border for visibility */
+    background-color: #f9f9f9; /* Optional: Light background */
+    border-radius: 8px; /* Optional: Rounded corners */
+  }
+  .user-list {
+    list-style: none; /* Remove bullets */
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif; /* Clean, modern font */
+    font-size: 16px; /* Consistent font size */
+  }
+  
+  .user-list li {
+    padding: 10px 15px; /* Space around the username */
+    margin-bottom: 5px; /* Spacing between users */
+    background-color: #f9f9f9; /* Light background for contrast */
+    border: 1px solid #e0e0e0; /* Subtle border for separation */
+    border-radius: 6px; /* Rounded corners for a modern look */
+    color: #333; /* Neutral text color */
+    display: flex;
+    align-items: center; /* Vertically center content */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Smooth hover effects */
+  }
+  
+  .user-list li:hover {
+    background-color: #e0f7fa; /* Highlight on hover */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow on hover */
+    cursor: pointer; /* Indicate clickable item */
+  }
+  
+  .user-list li .avatar {
+    width: 32px; /* Fixed size for profile image */
+    height: 32px;
+    border-radius: 50%; /* Circular profile image */
+    margin-right: 10px; /* Space between avatar and name */
+    background-color: #ccc; /* Placeholder color for avatar */
+  }
+  
+  .user-list li .username {
+    font-weight: 500; /* Medium font weight for prominence */
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Handle long usernames gracefully */
+  }

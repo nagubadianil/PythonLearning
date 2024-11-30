@@ -5,27 +5,34 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body >
-  <h1>Bookmarks</h1>
-
-  <!-- My Profile Input -->
-  <div id="profile-name"> </div>
+  <h1 class="app-name">Rushi Bookmark Sharing</h1>
+  <div id="profile-name" class="column profile-name"> </div>
+  
+ 
 
   <!-- Container for the current user's bookmarks -->
-  <div id="my-bookmarks">
+  <div class="primary-section" id="my-bookmarks">
     <h2>Your Bookmarks</h2>
     <div id="bookmark-tree"></div>
+    <button class="fancy-button"  id="share-btn">Share your selected bookmarks</button>
   </div>
-
+  
   <!-- Container for other profiles' bookmarks -->
-  <div id="other-bookmarks">
-    <h2>Friend's Bookmarks:</h2>
-    <div id="profiles-container"></div>
+  <div  class="sharing-section">
+    <div id="other-bookmarks">
+      <h2>Friend's Bookmarks:</h2>
+  
+      <div>
+        <div id="profiles-container"></div>
+      </div>
+  
+    </div>
+    <button class="fancy-button" id="add-btn">Add selected to Bookmark bar</button>
   </div>
-
+  <button class="fancy-button" id="refresh-btn">Refetch all bookmarks from server</button>
   <!-- Action Buttons -->
-  <button id="share-btn">Share to Google Sheet</button>
-  <button id="add-btn">Add Selected to My Bookmarks</button>
-  <button id="refresh-btn">Refresh</button>
+ 
+ 
 
   <script src="popup.js"></script>
 </body>

@@ -134,26 +134,37 @@ function deleteOtherProfilesBookmarks(bookmarkBarChildren, g_all_profiles) {
 }
 
 function calculateCheckedForProfiles(g_all_profiles) {
+
+  return new Promise((resolve, reject) => {
   chrome.bookmarks.getTree(async (bookmarkTree) => {
+   
+    const result = await getFromStorage(["profileName"]);
     const bookmarkBar = bookmarkTree[0];
     let bookmarkBarChildren = bookmarkBar.children[0].children;
     if (bookmarkBar.children[0].title == "Bookmarks bar") {
       for (const profile of g_all_profiles) {
+
+          if(result && result.profileName 
+            && result.profileName == profile.profileName){
+              continue
+            }
+
         for (const child of bookmarkBarChildren) {
           if (child.title == profile.profileName) {
-            const destinationBookmarks = profile.bookmarks; //[0].children;
+            const destinationBookmarks = profile.bookmarks[0].children; //[0].children;
             const sourceBookmarks = child.children; //[0].children
-
             updateCheckedProperty(sourceBookmarks, destinationBookmarks);
           }
         }
       }
     }
+    resolve(true)
   });
+});
 }
 function updateCheckedProperty(source, destination) {
-  // console.log(`updateCheckedProperty beg destination ${destination} length: ${destination.length}`)
-  if (!destination || !destination.length) return;
+   console.log(`updateCheckedProperty beg destination ${destination} length: ${destination?.length}`)
+  if (!destination || !destination?.length) return;
 
   for (const destItem of destination) {
     // Check if a matching item exists in the source hierarchy at the same level
@@ -164,6 +175,7 @@ function updateCheckedProperty(source, destination) {
     // If a match is found, set the `checked` property to true
     if (matchingSource) {
       destItem.checked = true;
+      //console.log(`settting ${destItem.title} to true`) 
     }
 
     // Recursively process children
@@ -348,8 +360,14 @@ async function renderOtherBookmarks(bookmarksData) {
   const container = document.getElementById("other-bookmarks");
 
   await deleteElementsWithBookmarkProfile()
+  const result = await getFromStorage(["profileName"]);
 
   for (const profile of bookmarksData) {
+    if(result && result.profileName 
+      && result.profileName == profile.profileName){
+        continue
+      }
+
     const profileSection = document.createElement("div");
     profileSection.style.marginBottom = "20px";
     profileSection.setAttribute("bookmarkProfile", profile.profileName);
@@ -357,6 +375,7 @@ async function renderOtherBookmarks(bookmarksData) {
     // Create profile header
     const profileHeader = document.createElement("h3");
     profileHeader.textContent = profile.profileName;
+    profileHeader.className = "user-list"
     profileSection.appendChild(profileHeader);
 
     // Create bookmarks container for the profile
@@ -382,12 +401,12 @@ async function loadFriendsBookmarks() {
 
   if (!g_all_profiles) return;
 
-  calculateCheckedForProfiles(g_all_profiles);
+  await calculateCheckedForProfiles(g_all_profiles);
 
   //await setToStorage({ all_profiles: JSON.stringify(g_all_profiles) });
    console.log("g_all_profiles:", JSON.stringify(g_all_profiles,null,2))
 
-  renderOtherBookmarks(g_all_profiles);
+  await renderOtherBookmarks(g_all_profiles);
 }
 
 function getImmediateCheckboxChildren(parentElement) {
