@@ -19,7 +19,7 @@ def yt_dlp_download_youtube_playlist(playlist_url, download_folder, type="audio"
     }
     
     format = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4' # Best quality
-    
+    name_ext = "_full_resolution"
     # resolution decided by user
     # ex: 360, 480, 720, 1080
     # Other options that can replae height
@@ -29,9 +29,10 @@ def yt_dlp_download_youtube_playlist(playlist_url, download_folder, type="audio"
     #   [vcodec=avc1.42E01E]  -- video codec of H.264 
     if resolution is not None:
         format = f'bestvideo[ext=mp4][height<={resolution}]+bestaudio[ext=m4a]/mp4' 
-    
+        name_ext = f"_{resolution}"
+        
     ydl_opts_video = {
-        'outtmpl': f'{download_folder}/%(title)s.%(ext)s',
+        'outtmpl': f'{download_folder}/%(title)s.%(ext)s{name_ext}',
         'format': format, 
         'merge_output_format': 'mp4',  # Ensure final format is MP4
         'postprocessors': [{
@@ -50,7 +51,7 @@ def yt_dlp_download_youtube_playlist(playlist_url, download_folder, type="audio"
         
 def download_audio_only():
    
-    single_video_or_playlist_url = "https://www.youtube.com/watch?v=TRqPNoB7D60"
+    single_video_or_playlist_url = "https://www.youtube.com/watch?v=97uVDPOibYw"
   
     download_folder = r"C:\Users\nagub\Music\Bhavesh_Music"
  
@@ -58,17 +59,17 @@ def download_audio_only():
     yt_dlp_download_youtube_playlist(single_video_or_playlist_url, download_folder, type="audio")
  
 def download_video_only():
-    single_video_or_playlist_url = "https://www.youtube.com/watch?v=3C1n5lqGdmY"
+    single_video_or_playlist_url = "https://www.youtube.com/watch?v=97uVDPOibYw"
   
-    download_folder = "C:/Users/nagub/Videos"
+    download_folder = r"C:\Users\nagub\Music\Bhavesh_Music"
  
     #  set type="video". Optionally set resolution to 240, 360, 720, or 1080 or any other. If you don't set, it will download at highest
-    yt_dlp_download_youtube_playlist(single_video_or_playlist_url, download_folder, type="video", resolution=None)
+    yt_dlp_download_youtube_playlist(single_video_or_playlist_url, download_folder, type="video", resolution="240")
     
 # Example usage
 if __name__ == "__main__":
     download_audio_only()
-    #download_video_only()
+    download_video_only()
     
     
   
